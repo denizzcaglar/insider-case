@@ -1,0 +1,506 @@
+{
+  "info": {
+    "name": "Insider Case — Football League Simulation",
+    "description": "REST API for the 4-team league simulation. Use the **Happy Path Runner** folder with Postman's Collection Runner to step through reset → next weeks → predictions → edit → play all → final standings in order.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "editFixtureId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Endpoints",
+      "item": [
+        {
+          "name": "GET /api/standings",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/standings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "standings"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/fixtures",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/fixtures",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "fixtures"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/weeks/next",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/weeks/next",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "weeks",
+                "next"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/weeks/play-all",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/weeks/play-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "weeks",
+                "play-all"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/predictions",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/predictions?iterations=10000&seed=demo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "predictions"
+              ],
+              "query": [
+                {
+                  "key": "iterations",
+                  "value": "10000"
+                },
+                {
+                  "key": "seed",
+                  "value": "demo"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /api/fixtures/{id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"home_goals\": 5,\n  \"away_goals\": 0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/fixtures/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "fixtures",
+                "1"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/league/reset",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"seed\": \"demo-seed\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/league/reset",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "league",
+                "reset"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/fixtures/{id}/commentary",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/fixtures/{{editFixtureId}}/commentary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "fixtures",
+                "{{editFixtureId}}",
+                "commentary"
+              ]
+            },
+            "description": "Returns a 2-sentence LLM-generated commentary for the given played fixture. Lazy-generated on first call, cached thereafter. Requires GEMINI_API_KEY in .env; returns 503 otherwise."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Happy Path Runner",
+      "description": "Ordered flow demonstrating the full feature set. Use Postman's Collection Runner with this folder selected.",
+      "item": [
+        {
+          "name": "1. Reset (seed: demo-runner)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"seed\": \"demo-runner\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/league/reset",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "league",
+                "reset"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Reset succeeded', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Schedule has 12 fixtures', () => pm.expect(json.season.fixtures_total).to.eql(12));",
+                  "pm.test('No fixtures played yet', () => pm.expect(json.season.fixtures_played).to.eql(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Standings (initial)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/standings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "standings"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('4 teams, all zero points', () => {",
+                  "    const s = pm.response.json().standings;",
+                  "    pm.expect(s).to.have.lengthOf(4);",
+                  "    s.forEach(row => pm.expect(row.points).to.eql(0));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Next Week (×1)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/weeks/next",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "weeks",
+                "next"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Week 1 played', () => pm.expect(json.week_played).to.eql(1));",
+                  "pm.test('2 results returned', () => pm.expect(json.results).to.have.lengthOf(2));",
+                  "pm.collectionVariables.set('editFixtureId', json.results[0].id.toString());"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Next Week (×2)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/weeks/next",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "weeks",
+                "next"
+              ]
+            }
+          }
+        },
+        {
+          "name": "5. Next Week (×3)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/weeks/next",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "weeks",
+                "next"
+              ]
+            }
+          }
+        },
+        {
+          "name": "6. Next Week (×4)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/weeks/next",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "weeks",
+                "next"
+              ]
+            }
+          }
+        },
+        {
+          "name": "7. Predictions (week 4+)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/predictions?iterations=5000&seed=demo-pred",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "predictions"
+              ],
+              "query": [
+                {
+                  "key": "iterations",
+                  "value": "5000"
+                },
+                {
+                  "key": "seed",
+                  "value": "demo-pred"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const sum = pm.response.json().predictions.reduce((a, p) => a + p.title_probability, 0);",
+                  "pm.test('Title probabilities sum to 100%', () => pm.expect(sum).to.be.closeTo(100, 0.2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8. Edit a result",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"home_goals\": 9,\n  \"away_goals\": 0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/fixtures/{{editFixtureId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "fixtures",
+                "{{editFixtureId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Result reflects 9-0', () => {",
+                  "    const f = pm.response.json().fixture;",
+                  "    pm.expect(f.home_goals).to.eql(9);",
+                  "    pm.expect(f.away_goals).to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "9. Predictions (after edit)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/predictions?iterations=5000&seed=demo-pred",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "predictions"
+              ],
+              "query": [
+                {
+                  "key": "iterations",
+                  "value": "5000"
+                },
+                {
+                  "key": "seed",
+                  "value": "demo-pred"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "10. Play All (remaining weeks)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/weeks/play-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "weeks",
+                "play-all"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Season complete', () => pm.expect(pm.response.json().season.is_complete).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11. Final Standings",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/standings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "standings"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

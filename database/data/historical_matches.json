@@ -1,0 +1,313 @@
+{
+  "seasons": [
+    {
+      "name": "Premier League 2023/24",
+      "start_year": 2023,
+      "end_year": 2024,
+      "matches": [
+        {
+          "date": "2023-08-13",
+          "home": "CHE",
+          "away": "LIV",
+          "home_goals": 1,
+          "away_goals": 1,
+          "week": 1
+        },
+        {
+          "date": "2023-10-08",
+          "home": "ARS",
+          "away": "MCI",
+          "home_goals": 1,
+          "away_goals": 0,
+          "week": 1
+        },
+        {
+          "date": "2023-10-21",
+          "home": "CHE",
+          "away": "ARS",
+          "home_goals": 2,
+          "away_goals": 2,
+          "week": 2
+        },
+        {
+          "date": "2023-11-12",
+          "home": "CHE",
+          "away": "MCI",
+          "home_goals": 4,
+          "away_goals": 4,
+          "week": 2
+        },
+        {
+          "date": "2023-11-25",
+          "home": "MCI",
+          "away": "LIV",
+          "home_goals": 1,
+          "away_goals": 1,
+          "week": 3
+        },
+        {
+          "date": "2023-12-23",
+          "home": "LIV",
+          "away": "ARS",
+          "home_goals": 1,
+          "away_goals": 1,
+          "week": 3
+        },
+        {
+          "date": "2024-01-31",
+          "home": "LIV",
+          "away": "CHE",
+          "home_goals": 4,
+          "away_goals": 1,
+          "week": 4
+        },
+        {
+          "date": "2024-02-04",
+          "home": "ARS",
+          "away": "LIV",
+          "home_goals": 3,
+          "away_goals": 1,
+          "week": 4
+        },
+        {
+          "date": "2024-02-17",
+          "home": "MCI",
+          "away": "CHE",
+          "home_goals": 1,
+          "away_goals": 1,
+          "week": 5
+        },
+        {
+          "date": "2024-03-10",
+          "home": "LIV",
+          "away": "MCI",
+          "home_goals": 1,
+          "away_goals": 1,
+          "week": 5
+        },
+        {
+          "date": "2024-03-31",
+          "home": "MCI",
+          "away": "ARS",
+          "home_goals": 0,
+          "away_goals": 0,
+          "week": 6
+        },
+        {
+          "date": "2024-04-23",
+          "home": "ARS",
+          "away": "CHE",
+          "home_goals": 5,
+          "away_goals": 0,
+          "week": 6
+        }
+      ]
+    },
+    {
+      "name": "Premier League 2024/25",
+      "start_year": 2024,
+      "end_year": 2025,
+      "matches": [
+        {
+          "date": "2024-08-18",
+          "home": "CHE",
+          "away": "MCI",
+          "home_goals": 0,
+          "away_goals": 2,
+          "week": 1
+        },
+        {
+          "date": "2024-09-22",
+          "home": "MCI",
+          "away": "ARS",
+          "home_goals": 2,
+          "away_goals": 2,
+          "week": 1
+        },
+        {
+          "date": "2024-10-20",
+          "home": "LIV",
+          "away": "CHE",
+          "home_goals": 2,
+          "away_goals": 1,
+          "week": 2
+        },
+        {
+          "date": "2024-10-27",
+          "home": "ARS",
+          "away": "LIV",
+          "home_goals": 2,
+          "away_goals": 2,
+          "week": 2
+        },
+        {
+          "date": "2024-11-10",
+          "home": "CHE",
+          "away": "ARS",
+          "home_goals": 1,
+          "away_goals": 1,
+          "week": 3
+        },
+        {
+          "date": "2024-12-01",
+          "home": "LIV",
+          "away": "MCI",
+          "home_goals": 2,
+          "away_goals": 0,
+          "week": 3
+        },
+        {
+          "date": "2025-01-25",
+          "home": "MCI",
+          "away": "CHE",
+          "home_goals": 3,
+          "away_goals": 1,
+          "week": 4
+        },
+        {
+          "date": "2025-02-02",
+          "home": "ARS",
+          "away": "MCI",
+          "home_goals": 5,
+          "away_goals": 1,
+          "week": 4
+        },
+        {
+          "date": "2025-02-23",
+          "home": "MCI",
+          "away": "LIV",
+          "home_goals": 0,
+          "away_goals": 2,
+          "week": 5
+        },
+        {
+          "date": "2025-03-16",
+          "home": "ARS",
+          "away": "CHE",
+          "home_goals": 1,
+          "away_goals": 0,
+          "week": 5
+        },
+        {
+          "date": "2025-05-04",
+          "home": "CHE",
+          "away": "LIV",
+          "home_goals": 3,
+          "away_goals": 1,
+          "week": 6
+        },
+        {
+          "date": "2025-05-11",
+          "home": "LIV",
+          "away": "ARS",
+          "home_goals": 2,
+          "away_goals": 2,
+          "week": 6
+        }
+      ]
+    },
+    {
+      "name": "Premier League 2025/26",
+      "start_year": 2025,
+      "end_year": 2026,
+      "matches": [
+        {
+          "date": "2025-08-31",
+          "home": "LIV",
+          "away": "ARS",
+          "home_goals": 1,
+          "away_goals": 0,
+          "week": 1
+        },
+        {
+          "date": "2025-09-21",
+          "home": "ARS",
+          "away": "MCI",
+          "home_goals": 1,
+          "away_goals": 1,
+          "week": 1
+        },
+        {
+          "date": "2025-10-04",
+          "home": "CHE",
+          "away": "LIV",
+          "home_goals": 2,
+          "away_goals": 1,
+          "week": 2
+        },
+        {
+          "date": "2025-11-09",
+          "home": "MCI",
+          "away": "LIV",
+          "home_goals": 3,
+          "away_goals": 0,
+          "week": 2
+        },
+        {
+          "date": "2025-11-30",
+          "home": "CHE",
+          "away": "ARS",
+          "home_goals": 1,
+          "away_goals": 1,
+          "week": 3
+        },
+        {
+          "date": "2026-01-04",
+          "home": "MCI",
+          "away": "CHE",
+          "home_goals": 1,
+          "away_goals": 1,
+          "week": 3
+        },
+        {
+          "date": "2026-01-08",
+          "home": "ARS",
+          "away": "LIV",
+          "home_goals": 0,
+          "away_goals": 0,
+          "week": 4
+        },
+        {
+          "date": "2026-02-08",
+          "home": "LIV",
+          "away": "MCI",
+          "home_goals": 1,
+          "away_goals": 2,
+          "week": 4
+        },
+        {
+          "date": "2026-03-01",
+          "home": "ARS",
+          "away": "CHE",
+          "home_goals": 2,
+          "away_goals": 1,
+          "week": 5
+        },
+        {
+          "date": "2026-04-12",
+          "home": "CHE",
+          "away": "MCI",
+          "home_goals": 0,
+          "away_goals": 3,
+          "week": 5
+        },
+        {
+          "date": "2026-04-19",
+          "home": "MCI",
+          "away": "ARS",
+          "home_goals": 2,
+          "away_goals": 1,
+          "week": 6
+        },
+        {
+          "date": "2026-05-09",
+          "home": "LIV",
+          "away": "CHE",
+          "home_goals": 1,
+          "away_goals": 1,
+          "week": 6
+        }
+      ]
+    }
+  ]
+}

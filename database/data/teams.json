@@ -1,0 +1,43 @@
+{
+    "season": {
+        "name": "Insider League 2026/27"
+    },
+    "teams": [
+        {
+            "name": "Manchester City",
+            "short_name": "MCI",
+            "attack": 80,
+            "defense": 80,
+            "overall": 80,
+            "home_advantage": 1.120,
+            "external_ref": "MCI"
+        },
+        {
+            "name": "Liverpool",
+            "short_name": "LIV",
+            "attack": 80,
+            "defense": 80,
+            "overall": 80,
+            "home_advantage": 1.150,
+            "external_ref": "LIV"
+        },
+        {
+            "name": "Arsenal",
+            "short_name": "ARS",
+            "attack": 80,
+            "defense": 80,
+            "overall": 80,
+            "home_advantage": 1.110,
+            "external_ref": "ARS"
+        },
+        {
+            "name": "Chelsea",
+            "short_name": "CHE",
+            "attack": 80,
+            "defense": 80,
+            "overall": 80,
+            "home_advantage": 1.100,
+            "external_ref": "CHE"
+        }
+    ]
+}
