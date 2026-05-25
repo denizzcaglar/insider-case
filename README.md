@@ -18,23 +18,15 @@ This README has three parts; how to run it, how it works, and how I built it.
 
 ## Part 1: How to Run?
 
-### One command, with Docker
+### Requirements
 
-If you have Docker, this is all it takes from a fresh clone:
+- PHP 8.2 or newer
+- Composer
+- A MySQL 8 database
 
-```bash
-git clone <repo-url>
-cd insider-case
-docker compose up
-```
+If you don't want to install MySQL yourself, the project also runs on Laravel Sail (Docker).
 
-That builds the image (installs PHP dependencies inside it), starts MySQL, waits for it to be
-healthy, runs the migrations and the seeder, and only then starts the app. When it's up, open
-**http://localhost:8080**. You don't need PHP, Composer, or MySQL installed on your machine.
-
-### Without Docker
-
-You'll need PHP 8.2 or newer, Composer, and a MySQL 8 database.
+### Install
 
 ```bash
 git clone <repo-url>
@@ -83,9 +75,9 @@ php artisan test
 
 ### Use it
 
-With Docker the app is at `http://localhost:8080`. Without Docker, `php artisan serve` runs it
-at `http://localhost:8000`. To exercise the API by hand, import the Postman collection from
-`postman/` and run the Happy Path Runner.
+Start the local server with `php artisan serve` (`http://localhost:8000`), or with Sail
+(Docker) via `./vendor/bin/sail up -d` (`http://localhost:8080`). To exercise the API by hand,
+import the Postman collection from `postman/` and run the Happy Path Runner.
 
 There is also interactive Swagger UI at `/docs` if you want to try the endpoints in the browser.
 
