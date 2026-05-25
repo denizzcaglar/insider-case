@@ -1,23 +1,40 @@
 # Insider Case - Football League Simulation
 
-The app plays matches week by week with a Poisson based statistical engine, keeps a Premier League style standings table, and predicts the title winner using a Monte Carlo simulation that also uses real Premier League data from the last three seasons.
+**To try it live: https://insider-case-deniz.up.railway.app/
+ To run it yourself, see below.
 
-The README has two parts: setup for the reviewer, and the story of how I built it.
+A backend that runs a small fourteam league, Premier League style. It plays the matches,
+keeps the table under the real PL rules (points, goal difference, head to head), and predicts
+who wins the title by simulating the rest of the season thousands of times. The team strengths
+are learned from real Premier League results from the last three seasons.
+
+There are two ways to play a match. Press **Next Week** and a fast engine works out the scores
+instantly. Or press **Watch** on one match and a second, tick engine acts it out live
+in your browser, event by event.
+
+This README has three parts; how to run it, how it works, and how I built it.
 
 ---
 
-## Part 1: Setup and Running the Project
+## Part 1: How to Run?
 
-### Requirements
+### One command, with Docker
 
-- PHP 8.2 or newer
-- Composer
-- A MySQL 8 database
-- A working Laravel environment
+If you have Docker, this is all it takes from a fresh clone:
 
-If you don't want to install MySQL yourself, the project also works with Laravel Sail (Docker).
+```bash
+git clone <repo-url>
+cd insider-case
+docker compose up
+```
 
-### Step-by-step Installation
+That builds the image (installs PHP dependencies inside it), starts MySQL, waits for it to be
+healthy, runs the migrations and the seeder, and only then starts the app. When it's up, open
+**http://localhost:8080**. You don't need PHP, Composer, or MySQL installed on your machine.
+
+### Without Docker
+
+You'll need PHP 8.2 or newer, Composer, and a MySQL 8 database.
 
 ```bash
 git clone <repo-url>
@@ -27,111 +44,203 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-Open the new `.env` file and fill in your database settings (`DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`) so they point to your local MySQL.
-
-### Database Setup and Seeders
+Open `.env` and point the database settings (`DB_HOST`, `DB_PORT`, `DB_DATABASE`,
+`DB_USERNAME`, `DB_PASSWORD`) at your local MySQL, then:
 
 ```bash
 php artisan migrate --seed
 ```
 
-The seeder is a bit different from a normal Laravel seed. Along with the empty tables, it also loads real Premier League match results from the public openfootball/england dataset. Only the matches between our four teams (Manchester City, Liverpool, Arsenal, Chelsea) are loaded, for the last three completed seasons (2023/24, 2024/25, 2025/26). That is 36 real matches in total.
+### About the seeder
 
-After seeding you will have:
+The seeder does a bit more than usual. It loads real Premier League results from the public
+openfootball/england dataset, but only the matches between our four teams (Manchester City,
+Liverpool, Arsenal, Chelsea), for the last three completed seasons. That is 36 real matches.
 
-- 1 simulated season called "Insider League 2026/27". This is the one you actually play.
-- 3 historical seasons with real PL match results. Read only, and they feed the prediction model.
-- 4 teams with neutral baseline strength values (every team starts at 80/80 on purpose, see Part 2).
+After seeding you have:
 
-### Gemini API Key (For AI Match Commentary)
+- **1 playable season**, "Insider League 2026/27". This is the one you simulate.
+- **3 historical seasons** with real PL results. They are read only, and they feed the prediction model. A middleware blocks any attempt to edit them.
+- **4 teams**, each starting at a neutral 80/80 attack/defense. Real strength is learned from
+  the historical data, not assigned by hand (see Part 2).
+- **44 players**, 11 per club, with attribute ratings used by the live match engine.
 
-For each played match you can click "Commentary" and get a short 2 sentence summary written by Google Gemini. To use it, get a free API key from Google AI Studio and add it to your `.env`:
+
+Also, for each played match you can ask for a short, AI-written summary. Get a free key from Google AI Studio and add it to `.env`:
 
 ```
 GEMINI_API_KEY=your-key-here
 GEMINI_MODEL=gemini-2.5-flash
 ```
 
-The default `gemini-2.5-flash` works on the free tier. The Pro model (`gemini-2.5-pro`) gives slightly better text but it only works with a paid Google Cloud project.
+Without a key, only the commentary endpoint fails. Everything else still works.
 
-If you don't set a key, only the commentary endpoint will fail. Everything else still works.
-
-### Running the Tests
+### Tests
 
 ```bash
 php artisan test
 ```
 
-Tests cover the simulation engine, the prediction algorithm, the historical fitter, the form tracker, the API endpoints, the middleware that protects historical seasons, and the Gemini commentary layer.
+### Use it
 
-### Accessing the App
+With Docker the app is at `http://localhost:8080`. Without Docker, `php artisan serve` runs it
+at `http://localhost:8000`. To exercise the API by hand, import the Postman collection from
+`postman/` and run the Happy Path Runner.
 
-Start the local server with `php artisan serve` (`http://localhost:8000`), or with Docker via `./vendor/bin/sail up -d` (`http://localhost:8080`).
+There is also interactive Swagger UI at `/docs` if you want to try the endpoints in the browser.
 
-For testing the API by hand, import the Postman collection from the `postman/` folder and run the "Happy Path Runner". Each step has assertions, so a clean run also works as a smoke test.
+Main endpoints (all under `/api`):
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `/standings` | Current league table |
+| `GET` | `/fixtures` | Fixture list with results |
+| `GET` | `/predictions` | Monte Carlo title chances |
+| `GET` | `/predictions/snapshots` | Week-by-week history for the chart |
+| `POST` | `/weeks/next` | Play the next week |
+| `POST` | `/weeks/play-all` | Play every remaining week |
+| `PATCH` | `/fixtures/{id}` | Edit a result, everything recomputes |
+| `POST` | `/league/reset` | Wipe results, rebuild the schedule |
+| `GET` | `/fixtures/{id}/watch?speed=60` | Live SSE stream of one match |
+| `GET` | `/fixtures/{id}/events` | Saved event list for a watched match |
+| `GET` | `/fixtures/{id}/commentary` | AI commentary (needs a Gemini key) |
 
 ---
 
-## Part 2: How I Built This
+## Part 2: How it works
 
-### 1. Looking at the Case and Doing Research
+### Layering
 
-When I first read the case, I noticed that the case have 2 important algorithms: fixture generation and championship prediction. So I started researching what are real world algorithms and approaches.
-I spent some time reading. I tried to understand how real betting companies and sports analytics teams actually predict football match outcomes. I went through Poisson goal models, expected goals (xG), Elo ratings. 
+The code is split by responsibility, and the core is kept free of the framework.
 
-### 2. The Algorithmic Choice (Avoiding Overkill)
+- **`app/Domain`** — interfaces and immutable value objects.
+- **`app/Services`** — the logic, grouped: Simulation, Prediction, Standings, League, Fixtures, Commentary.
+- **`app/Http`** — controllers, requests, resources, middleware.
+- **`app/Models`** — models only load and save data
 
-The research opened a bigger question. There are very serious models out there. The original Maher 1982 paper, Dixon and Coles 1997 with low score corrections and time decay, Karlis-Ntzoufras bivariate Poisson, full machine learning ensembles...
+### The patterns I leaned on
 
-I had to pick something that fits the size of the problem. The case is 4 teams playing 12 matches over 6 weeks, as it is not a real Premier League season with 380 matches. If I used a deep machine learning model, I would have more parameters than data points. If I used full Dixon-Coles, I would be fitting things the app doesn't even display.
+- **Strategy** — both engines share the `MatchSimulator` interface, so the rest of the app
+  asks for a match to be played and doesn't care which engine does it.
+- **Factory** — the tick engine needs a few parts wired together, so `DefaultMatchSimulatorFactory`
+  is the one place that builds it.
+- **Decorator** — `CachedChampionshipPredictor` wraps the real predictor and adds caching, and
+  since it has the same interface nothing else notices.
+- **Comparator chain** — `StandingsCalculator` applies the tiebreakers in order, with
+  head to head split out into `HeadToHeadResolver`.
+- **Value objects** — scores, results, standings rows, events live as immutable types.
 
-So I picked a middle ground:
+### The fast engine and the predictor
 
-- The Maher iterative model as the base for recovering team strengths from match scores. It is the foundation of the whole Poisson football model family and is still used by serious analytics teams today.
-- Dixon-Coles style time decay on top, so recent matches matter more than older ones.
-- I skipped the Dixon-Coles tau correction. It changes individual scoreline probabilities but not the title race outcome at our scale.
+**The match model.** For each match the engine works out how many goals each team is expected
+to score, from that team's attack, the opponent's defense, and a home bonus. Then it draws the
+real scoreline from a **Poisson distribution**, the standard way to model goals in football.
+It is random but repeatable: the same starting point always gives the same score, and a match
+takes a fraction of a millisecond, which is what makes running the season thousands of times
+practical.
 
-Then, before I let the AI write any code, I spent a lot of time arguing with it about the architecture. I proposed and disscussed my ideas about system design, single responsibility, and where the boundaries between services should live.
+**Where strength comes from.** Every team starts equal at 80/80. Real ability is learned in two
+layers that multiply together:
 
-One of the biggest argument was about team strength values.
-I decided that every team starts at 80/80 and the historical fit does all the work.
+- **Long-term ability** comes from the 36 real matches. A well-known football-stats method (the
+  **Maher** model) works backwards from the scorelines to estimate each team's true attack and
+  defense. Recent matches count more than old ones (**Dixon-Coles time decay**), and since the
+  sample is small, each estimate is pulled gently back toward the baseline so one freak result
+  can't dominate.
+- **Recent form** is a rolling average of the current season that nudges a team up or down. A
+  couple of safeguards keep the math sane on edge cases, so a 0-0 or a clean sheet can't make
+  the numbers blow up.
 
-Team specific strength comes from real PL match results processed through Dixon-Coles time decay. The only hand picked value left is the per team home advantage, which is a stadium property and not a team quality signal.
+**The predictor.** To estimate title chances it just plays the rest of the season out **10,000
+times**. Each run simulates every remaining match, builds the final table with the real PL
+tiebreakers, and notes who finished top. A team's title chance is how often it came first. The
+played part of the table is computed once and reused, and the whole thing is seeded, so the
+numbers are reproducible.
 
-### 3. Building It in Clean Stages
+### The tick engine (watch a match live)
 
-**Stage 1: data and the historical seeder.** I wrote the historical seed file with the 36 real PL matches and built the seeder that loads them into the database. Historical seasons share the same `seasons` and `fixtures` tables as the simulated one but they have an `is_historical` flag. A small middleware blocks any write request against them, so a reviewer cannot accidentally edit a real Premier League result through the UI or the API.
+The fast engine gives a score but no story. The second engine plays one match out moment by
+moment, so you can press **Watch** and follow a live feed.
 
-**Stage 2: the EffectiveStrengthBuilder as a Single Source of Truth.** 
-The builder does three things in order:
+It behaves like a real match. Whoever has the ball picks an action (pass, dribble, or shot),
+and how likely each one is depends on where they are on the pitch and on the player's
+attributes. Each duel (passer vs defender, striker vs keeper) is decided by comparing the
+ratings. The clock moves forward by however long each action takes, so a full match plays out
+in a couple of hundred steps and shows around 30 to 50 events: kickoff, shots, saves, goals,
+half-time, full-time. To keep it quick, all player data is loaded once before kickoff instead
+of being fetched during the match.
 
-1. It runs the historical Maher fit with time decay to get a prior attack and defense per team.
-2. It runs a form tracker on the current season's played matches. The form tracker uses exponentially weighted moving average (EWMA) to smooth recent performance into a multiplicative factor around 1.0. I also added Laplace smoothing to the goal counts, because otherwise a 0-0 match would blow up the ratio. A clean sheet would create a 20x outlier and crash the form factor against the clamp limits.
-3. It multiplies the prior by the form factor to get the final effective strength.
+It is tuned to look like real football (roughly 2.8 to 3 goals, about 27 shots, around half on
+target), and a test checks it hasn't drifted into unrealistic numbers.
 
-After this stage, the builder is the only place in the whole app that decides "how strong is each team right now." Nothing reads team attack and defense directly from the database after this point.
+Both engines plug into the same interface and save results the same way, so the league table
+doesn't care which one produced a score. A watched match's events are saved the first time and
+just replayed on a re-watch, streamed over SSE at an adjustable speed. A match already played
+by the fast engine can't be watched, because re-running it would change a result that already
+counts. And the 10,000-run predictor never uses this engine because it would be far too slow.
 
-**Stage 3: the polish layer.** With the math working, I added the Gemini commentary feature so a played match can show a short narrated summary. I also exposed a "Model Inputs" panel in the UI so a reviewer can click it open and see, for each team:
+### One more note
 
-- The seed value (80/80 for everyone).
-- The prior from the historical fit.
-- The form factor from the current season.
-- The final effective number that the simulator actually used.
+The league table is never cached. It is always rebuilt from the matches that have been played,
+so it can't fall out of sync. Historical and simulated seasons live in the same tables, told
+apart by an `is_historical` flag.
 
-The week by week probability chart (Chart.js) is also there, showing how each team's title chance moves as more matches get played.
+---
 
-### 4. The Tick Engine (Watch Match)
+## Part 3: How I built this
 
-The statistical engine produces a final score in microseconds, which is what you want for the Monte Carlo predictor and for batch play. But it has no story. To add a story I built a second match engine that runs a possession loop and emits a sequence of events with timestamps, so a user can click **Watch** on an unplayed fixture and see the match play out in a live feed.
+### Reading the case and doing the research
 
-The two engines live behind the same `MatchSimulator` interface, so the predictor and the batch paths are not aware that a second engine exists. The tick engine implements an extended `WatchableMatchSimulator` interface that adds `simulateWithEvents`. A small `MatchSimulatorFactory` is the only place that knows how to wire the tick simulator together with its `PlayerDecisionEngine` and a freshly seeded `Rng`. The factory exists for this reason and nothing else. The 120k-iteration predictor loop never goes through it.
+When I read the case first thing I realized that the case needs two fundamental algo:  fixture generation and championship prediction. Prediction is the interesting one, so I went
+and read how it's done for real. I worked through Poisson goal models, expected goals (xG), Elo
+ratings, the original **Maher (1982)** paper, **Dixon-Coles (1997)** with its low score
+correction and time decay, the **Karlis-Ntzoufras** bivariate Poisson, and full ML ensembles.
 
-The engine itself is a possession loop. Each iteration is one action by the team in possession (pass, dribble, or shot), drawn from a probability distribution that depends on the on-ball player's attributes and the pitch zone (own third, midfield, attacking third). The clock advances by the duration of the chosen action, not by a fixed tick, so a match resolves in roughly 150 to 250 iterations and surfaces about 30 to 50 events on the feed (kickoff, shot, save, goal, halftime, fulltime). Player data is hoisted into plain arrays before the loop starts, so the hot path never touches Eloquent.
+The research resulted in bigger question; which of these actually fits the problem? This is four
+teams playing twelve matches over six weeks, not a 380 match season. A ML model
+would have more parameters than data points. Full Dixon-Coles would be fitting things the app
+never even shows.
 
-Calibration uses real Premier League averages as targets: around 2.8 to 3 goals per match, around 27 shots, 45 to 50 percent on target, 11 percent conversion. The four seed teams are all top-tier sides, so pairings between them sit slightly above these averages, which is what real top-tier matchups do. A realism test runs 48 matches (every ordered pairing, 8 seeds each) and asserts loose bounds on these metrics. It runs in about 2 seconds.
+So I picked a deliberate middle ground and could defend every piece:
 
-Each watched match goes through the same `LeagueService` path as a stat-engine match, so the standings calculator, the prediction cache, and the snapshot logic see no difference between the two engines. The events are persisted to a `match_events` table on first watch and streamed back with paced timing over SSE. A re-watch reads from the table and never re-simulates. A fixture played through the fast engine cannot be watched, because the tick engine would produce a different scoreline that would silently rewrite history.
+- **Maher iterative fit** to recover team strengths from scores. It's the foundation of the
+  whole Poisson family and still used by serious analytics teams.
+- **Dixon-Coles time decay** on top, so recent matches matter more.
+- I **skipped the Dixon-Coles low score correction** on purpose. It nudges individual scoreline
+  probabilities but doesn't change who wins the title at this scale.
 
-**Endpoints added:**
-- `GET /api/fixtures/{fixture}/watch?speed={int}` is an SSE stream. The first call on an unplayed fixture simulates and persists; subsequent calls replay from the database. `speed` is match-seconds per real-second (default 60, so a 90-minute match takes 90 real seconds to watch).
-- `GET /api/fixtures/{fixture}/events` returns the JSON list of every event for a fixture that has been watched. The Skip button uses it and any future analytics endpoint can read it directly.
+### Arguing the architecture before writing code
+
+Before I let the AI write anything, I spent a lot of time arguing design with it: single
+responsibility, where the service boundaries sit, which seams deserve an interface. The decision
+I'm happiest with is that **every team starts at a neutral 80/80 and the historical fit does all
+the work.** The only value I picked by hand is each team's home advantage, because that's a property
+of a stadium, not a signal of team quality. That choice is what made `EffectiveStrengthBuilder`
+a clean single source of truth instead of a pile of magic numbers.
+
+### Building in clean stages
+
+1. **Data and the historical seeder.** I loaded the 36 real matches into the same tables as the
+   simulated season, flagged them `is_historical`, and put the write guarding middleware in front
+   so they can't be edited through the UI or API.
+2. **One place that decides team strength.** The historical fit gives long term ability, the
+   form tracker adjusts for the current season, and their product is the only strength figure
+   the simulator ever sees. This is also where I had to fix two subtle bugs: a feedback loop
+   where a team's form started inflating itself, and a 0-0 result that made the form math blow
+   up.
+3. **Polish.** Gemini match commentary, a "Model Inputs" panel that shows each team's
+   seed, prior, form, and effective value so the model is inspectable, and a Chart.js chart of
+   how the title chances move week by week.
+
+### A second engine, for the story
+
+The fast engine was well for prediction but does not tell the internal steps, so I added the tick engine behind
+the same interface to power the live "watch" experience. The interesting engineering here was
+performance. An earlier attempt was slow because it touched Eloquent inside the loop and
+allocated objects on every micro action. The current version hoists player data into plain
+arrays and only allocates an event object when something actually happens, then I calibrated it
+against real PL averages with a fast realism test.
+
+### How I used Claude Code
+
+I used Claude as an assistant, not an author. Especially in UI part cause I am not confident in my frontend skills, I only have school project experiences unlike Backend. But I wanted a good first impression visually, so I used Claude mainly for frontend. Also, I used for backend but I asked/discussed real world approaches and the system design choices I had in my mind. 
