@@ -1,9 +1,8 @@
 # Insider Case - Football League Simulation
 
-**To try it live: https://insider-case-deniz.up.railway.app/
- To run it yourself, see below.
+**Live demo: https://insider-case-deniz.up.railway.app/** — to run it yourself, see below.
 
-A backend that runs a small fourteam league, Premier League style. It plays the matches,
+A backend that runs a small four team league, Premier League style. It plays the matches,
 keeps the table under the real PL rules (points, goal difference, head to head), and predicts
 who wins the title by simulating the rest of the season thousands of times. The team strengths
 are learned from real Premier League results from the last three seasons.
@@ -57,8 +56,9 @@ After seeding you have:
   the historical data, not assigned by hand (see Part 2).
 - **44 players**, 11 per club, with attribute ratings used by the live match engine.
 
+### Optional: AI commentary
 
-Also, for each played match you can ask for a short, AI-written summary. Get a free key from Google AI Studio and add it to `.env`:
+For each played match you can ask for a short, AI-written summary. Get a free key from Google AI Studio and add it to `.env`:
 
 ```
 GEMINI_API_KEY=your-key-here
