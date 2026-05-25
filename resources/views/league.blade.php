@@ -1488,6 +1488,27 @@
         }
     };
 
+    const loadPredictions = (season) => {
+        if (season.is_historical) {
+            $('predictions-card').hidden = true;
+            $('chart-card').hidden = true;
+            return;
+        }
+        let iterations = null;
+        if (season.fixtures_played >= 8 && !season.is_complete) {
+            iterations = 10000;
+        } else if (season.is_complete) {
+            iterations = 1;
+        }
+        if (iterations === null) {
+            $('predictions-card').hidden = true;
+            return;
+        }
+        api('GET', `/api/predictions?iterations=${iterations}`)
+            .then(renderPredictions)
+            .catch(() => {});
+    };
+
     const loadAll = async () => {
         try {
             const [standings, fixtures, snapshots] = await Promise.all([
@@ -1499,23 +1520,7 @@
             renderStandings(standings.standings);
             renderFixtures(fixtures.fixtures_by_week);
             renderChart(snapshots);
-
-            if (standings.season.is_historical) {
-                $('predictions-card').hidden = true;
-                $('chart-card').hidden = true;
-            } else if (standings.season.fixtures_played >= 8 && !standings.season.is_complete) {
-                try {
-                    const preds = await api('GET', '/api/predictions?iterations=10000');
-                    renderPredictions(preds);
-                } catch (_) {}
-            } else if (standings.season.is_complete) {
-                try {
-                    const preds = await api('GET', '/api/predictions?iterations=1');
-                    renderPredictions(preds);
-                } catch (_) {}
-            } else {
-                $('predictions-card').hidden = true;
-            }
+            loadPredictions(standings.season);
         } catch (e) {
             flash(e.message, true);
         }
