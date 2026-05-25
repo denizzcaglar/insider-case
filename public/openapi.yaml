@@ -1,0 +1,215 @@
+openapi: 3.0.3
+info:
+  title: Insider Case - Football League Simulation API
+  version: "1.0"
+  description: >
+    Endpoints for the four-team league simulation. Every season-scoped endpoint
+    accepts an optional season_id query param and falls back to the current season.
+servers:
+  - url: /api
+
+paths:
+  /seasons:
+    get:
+      summary: List seasons
+      description: All seasons with played and total fixture counts. Drives the UI picker.
+      responses:
+        "200":
+          description: List of seasons
+
+  /standings:
+    get:
+      summary: League table
+      description: Standings rebuilt from played fixtures, sorted by the PL tiebreakers.
+      parameters:
+        - $ref: "#/components/parameters/SeasonId"
+      responses:
+        "200":
+          description: The current standings
+
+  /fixtures:
+    get:
+      summary: Fixtures grouped by week
+      parameters:
+        - $ref: "#/components/parameters/SeasonId"
+      responses:
+        "200":
+          description: Fixtures keyed by week, plus season state
+
+  /fixtures/{fixture}:
+    patch:
+      summary: Edit a result
+      description: >
+        Sets a fixture score. Standings, predictions, and snapshots recompute.
+        Rejected for historical (read-only) seasons.
+      parameters:
+        - $ref: "#/components/parameters/Fixture"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [home_goals, away_goals]
+              properties:
+                home_goals:
+                  type: integer
+                  minimum: 0
+                  maximum: 99
+                  example: 2
+                away_goals:
+                  type: integer
+                  minimum: 0
+                  maximum: 99
+                  example: 1
+      responses:
+        "200":
+          description: Updated fixture, season state, and standings
+        "403":
+          description: Fixture belongs to a historical season
+
+  /fixtures/{fixture}/events:
+    get:
+      summary: Events for a watched match
+      description: The persisted event list. 404 if the match was not watched.
+      parameters:
+        - $ref: "#/components/parameters/Fixture"
+      responses:
+        "200":
+          description: Fixture score and ordered event list
+        "404":
+          description: No events recorded for this fixture
+
+  /fixtures/{fixture}/watch:
+    get:
+      summary: Live match stream (SSE)
+      description: >
+        Server-Sent Events stream. First call on an unplayed fixture simulates and
+        persists, later calls replay from the database.
+      parameters:
+        - $ref: "#/components/parameters/Fixture"
+        - name: speed
+          in: query
+          required: false
+          description: Match-seconds per real-second. Default 60.
+          schema:
+            type: integer
+            default: 60
+      responses:
+        "200":
+          description: text/event-stream of match events
+
+  /fixtures/{fixture}/commentary:
+    get:
+      summary: AI match commentary
+      description: Short Gemini-written summary of a played match. Needs a Gemini API key.
+      parameters:
+        - $ref: "#/components/parameters/Fixture"
+      responses:
+        "200":
+          description: Commentary text
+        "503":
+          description: Gemini key not configured
+
+  /predictions:
+    get:
+      summary: Title probabilities (Monte Carlo)
+      description: >
+        Simulates the rest of the season many times and reports each team's title
+        chance, plus the model inputs (seed, prior, form, effective).
+      parameters:
+        - $ref: "#/components/parameters/SeasonId"
+        - name: iterations
+          in: query
+          required: false
+          description: Number of simulated seasons.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100000
+            default: 10000
+        - name: seed
+          in: query
+          required: false
+          description: Seed for reproducible runs.
+          schema:
+            type: string
+            maxLength: 128
+      responses:
+        "200":
+          description: Predictions and model inputs
+
+  /predictions/snapshots:
+    get:
+      summary: Week-by-week probability history
+      description: Backs the title-probability line chart.
+      parameters:
+        - $ref: "#/components/parameters/SeasonId"
+      responses:
+        "200":
+          description: One probability set per recorded week
+
+  /weeks/next:
+    post:
+      summary: Play the next week
+      description: Simulates the next unplayed week. Rejected for historical seasons.
+      parameters:
+        - $ref: "#/components/parameters/SeasonId"
+      responses:
+        "200":
+          description: Updated season state and standings
+        "409":
+          description: Season already complete
+        "403":
+          description: Historical season
+
+  /weeks/play-all:
+    post:
+      summary: Play every remaining week
+      parameters:
+        - $ref: "#/components/parameters/SeasonId"
+      responses:
+        "200":
+          description: Updated season state and standings
+        "403":
+          description: Historical season
+
+  /league/reset:
+    post:
+      summary: Reset the league
+      description: Wipes results and rebuilds the schedule. Rejected for historical seasons.
+      parameters:
+        - $ref: "#/components/parameters/SeasonId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                seed:
+                  type: string
+                  maxLength: 128
+                  description: Optional seed for the regenerated schedule.
+      responses:
+        "200":
+          description: Fresh season state, fixtures, and standings
+        "403":
+          description: Historical season
+
+components:
+  parameters:
+    SeasonId:
+      name: season_id
+      in: query
+      required: false
+      description: Target season. Falls back to the current season when omitted.
+      schema:
+        type: integer
+    Fixture:
+      name: fixture
+      in: path
+      required: true
+      description: Fixture id.
+      schema:
+        type: integer
