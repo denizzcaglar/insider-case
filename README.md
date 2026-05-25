@@ -1,9 +1,9 @@
 # Insider Case - Football League Simulation
 
-**To try it live: https://insider-case-deniz.up.railway.app/
- To run it yourself, see below.
+**To try it live: https://insider-case-deniz.up.railway.app/**
+To run it yourself, see below.
 
-A backend that runs a small fourteam league, Premier League style. It plays the matches,
+A backend that runs a small four team league. It plays the matches,
 keeps the table under the real PL rules (points, goal difference, head to head), and predicts
 who wins the title by simulating the rest of the season thousands of times. The team strengths
 are learned from real Premier League results from the last three seasons.
