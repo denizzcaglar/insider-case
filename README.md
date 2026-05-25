@@ -119,3 +119,19 @@ After this stage, the builder is the only place in the whole app that decides "h
 - The final effective number that the simulator actually used.
 
 The week by week probability chart (Chart.js) is also there, showing how each team's title chance moves as more matches get played.
+
+### 4. The Tick Engine (Watch Match)
+
+The statistical engine produces a final score in microseconds, which is what you want for the Monte Carlo predictor and for batch play. But it has no story. To add a story I built a second match engine that runs a possession loop and emits a sequence of events with timestamps, so a user can click **Watch** on an unplayed fixture and see the match play out in a live feed.
+
+The two engines live behind the same `MatchSimulator` interface, so the predictor and the batch paths are not aware that a second engine exists. The tick engine implements an extended `WatchableMatchSimulator` interface that adds `simulateWithEvents`. A small `MatchSimulatorFactory` is the only place that knows how to wire the tick simulator together with its `PlayerDecisionEngine` and a freshly seeded `Rng`. The factory exists for this reason and nothing else. The 120k-iteration predictor loop never goes through it.
+
+The engine itself is a possession loop. Each iteration is one action by the team in possession (pass, dribble, or shot), drawn from a probability distribution that depends on the on-ball player's attributes and the pitch zone (own third, midfield, attacking third). The clock advances by the duration of the chosen action, not by a fixed tick, so a match resolves in roughly 150 to 250 iterations and surfaces about 30 to 50 events on the feed (kickoff, shot, save, goal, halftime, fulltime). Player data is hoisted into plain arrays before the loop starts, so the hot path never touches Eloquent.
+
+Calibration uses real Premier League averages as targets: around 2.8 to 3 goals per match, around 27 shots, 45 to 50 percent on target, 11 percent conversion. The four seed teams are all top-tier sides, so pairings between them sit slightly above these averages, which is what real top-tier matchups do. A realism test runs 48 matches (every ordered pairing, 8 seeds each) and asserts loose bounds on these metrics. It runs in about 2 seconds.
+
+Each watched match goes through the same `LeagueService` path as a stat-engine match, so the standings calculator, the prediction cache, and the snapshot logic see no difference between the two engines. The events are persisted to a `match_events` table on first watch and streamed back with paced timing over SSE. A re-watch reads from the table and never re-simulates. A fixture played through the fast engine cannot be watched, because the tick engine would produce a different scoreline that would silently rewrite history.
+
+**Endpoints added:**
+- `GET /api/fixtures/{fixture}/watch?speed={int}` is an SSE stream. The first call on an unplayed fixture simulates and persists; subsequent calls replay from the database. `speed` is match-seconds per real-second (default 60, so a 90-minute match takes 90 real seconds to watch).
+- `GET /api/fixtures/{fixture}/events` returns the JSON list of every event for a fixture that has been watched. The Skip button uses it and any future analytics endpoint can read it directly.

@@ -38,6 +38,7 @@ final class FixtureResource extends JsonResource
             'home_goals' => $f->home_goals,
             'away_goals' => $f->away_goals,
             'simulated_at' => $f->simulated_at?->toIso8601String(),
+            'events_count' => (int) ($f->events_count ?? 0),
         ];
     }
 }

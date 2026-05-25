@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\FixturesController;
 use App\Http\Controllers\Api\LeagueController;
 use App\Http\Controllers\Api\MatchCommentaryController;
+use App\Http\Controllers\Api\MatchStreamController;
 use App\Http\Controllers\Api\PredictionController;
 use App\Http\Controllers\Api\PredictionSnapshotController;
 use App\Http\Controllers\Api\SeasonsController;
@@ -19,6 +20,8 @@ Route::get('/standings', [StandingsController::class, 'index']);
 
 Route::get('/fixtures', [FixturesController::class, 'index']);
 Route::get('/fixtures/{fixture}/commentary', [MatchCommentaryController::class, 'show']);
+Route::get('/fixtures/{fixture}/events', [FixturesController::class, 'events']);
+Route::get('/fixtures/{fixture}/watch', [MatchStreamController::class, 'stream']);
 
 Route::get('/predictions', [PredictionController::class, 'index']);
 Route::get('/predictions/snapshots', [PredictionSnapshotController::class, 'index']);

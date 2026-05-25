@@ -6,12 +6,14 @@ namespace App\Providers;
 
 use App\Domain\Contracts\ChampionshipPredictor;
 use App\Domain\Contracts\MatchSimulator;
+use App\Domain\Contracts\MatchSimulatorFactory;
 use App\Services\Prediction\CachedChampionshipPredictor;
 use App\Services\Prediction\CurrentFormTracker;
 use App\Services\Prediction\EffectiveStrengthBuilder;
 use App\Services\Prediction\HistoricalStrengthFitter;
 use App\Services\Prediction\MonteCarloChampionshipPredictor;
 use App\Services\Prediction\PredictionCacheStore;
+use App\Services\Simulation\DefaultMatchSimulatorFactory;
 use App\Services\Simulation\StatisticalMatchSimulator;
 use App\Services\Standings\StandingsCalculator;
 use App\Support\SeededRng;
@@ -34,6 +36,9 @@ final class DomainServiceProvider extends ServiceProvider
         $this->app->bind(MatchSimulator::class, fn () => new StatisticalMatchSimulator(
             new SeededRng(),
         ));
+
+        // Tick engine is opt-in via the factory.
+        $this->app->singleton(MatchSimulatorFactory::class, DefaultMatchSimulatorFactory::class);
 
         $this->app->singleton(HistoricalStrengthFitter::class, fn () => new HistoricalStrengthFitter());
         $this->app->singleton(CurrentFormTracker::class, fn () => new CurrentFormTracker());

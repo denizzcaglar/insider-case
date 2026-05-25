@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\Services\League;
 
 use App\Domain\Contracts\ChampionshipPredictor;
+use App\Domain\ValueObjects\MatchEvent as EventVO;
+use App\Domain\ValueObjects\MatchResultWithEvents;
 use App\Domain\ValueObjects\PlayedFixture;
 use App\Domain\ValueObjects\Score;
 use App\Domain\ValueObjects\StandingsTable;
 use App\Domain\ValueObjects\TeamStrength;
 use App\Models\Fixture;
 use App\Models\MatchCommentary;
+use App\Models\MatchEvent;
 use App\Models\PredictionSnapshot;
 use App\Models\Season;
 use App\Models\Team;
@@ -108,6 +111,39 @@ final class LeagueService
         }
 
         return $byWeek;
+    }
+
+    public function recordWatchedFixture(Fixture $fixture, MatchResultWithEvents $r): void
+    {
+        DB::transaction(function () use ($fixture, $r): void {
+            $fixture->update([
+                'played' => true,
+                'home_goals' => $r->result->score->home,
+                'away_goals' => $r->result->score->away,
+                'simulated_at' => now(),
+            ]);
+
+            if ($r->events !== []) {
+                $now = now();
+                $rows = array_map(static fn (EventVO $e) => [
+                    'fixture_id' => $fixture->id,
+                    'second' => $e->second,
+                    'type' => $e->type,
+                    'team_id' => $e->teamId,
+                    'player_id' => $e->playerId,
+                    'detail' => $e->detail === [] ? null : json_encode($e->detail),
+                    'created_at' => $now,
+                ], $r->events);
+
+                MatchEvent::insert($rows);
+            }
+
+            $this->predictionCache->bustForSeason((int) $fixture->season_id);
+
+            if ($this->isWeekComplete($fixture)) {
+                $this->snapshotPredictionsFor($fixture->season, (int) $fixture->week);
+            }
+        });
     }
 
     /**
@@ -270,6 +306,17 @@ final class LeagueService
         } catch (Throwable $e) {
             report($e);
         }
+    }
+
+    private function isWeekComplete(Fixture $fixture): bool
+    {
+        $remaining = Fixture::query()
+            ->where('season_id', $fixture->season_id)
+            ->where('week', $fixture->week)
+            ->where('played', false)
+            ->count();
+
+        return $remaining === 0;
     }
 
     /**

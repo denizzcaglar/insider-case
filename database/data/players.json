@@ -1,0 +1,506 @@
+[
+  {
+    "external_ref": "mci",
+    "players": [
+      {
+        "name": "Ederson",
+        "position": "GK",
+        "pace": 60,
+        "shooting": 25,
+        "passing": 85,
+        "dribbling": 70,
+        "defending": 30,
+        "physical": 78,
+        "overall": 88
+      },
+      {
+        "name": "Kyle Walker",
+        "position": "DEF",
+        "pace": 90,
+        "shooting": 50,
+        "passing": 74,
+        "dribbling": 75,
+        "defending": 82,
+        "physical": 80,
+        "overall": 84
+      },
+      {
+        "name": "Ruben Dias",
+        "position": "DEF",
+        "pace": 66,
+        "shooting": 40,
+        "passing": 75,
+        "dribbling": 68,
+        "defending": 88,
+        "physical": 84,
+        "overall": 87
+      },
+      {
+        "name": "Nathan Ake",
+        "position": "DEF",
+        "pace": 78,
+        "shooting": 45,
+        "passing": 73,
+        "dribbling": 72,
+        "defending": 84,
+        "physical": 80,
+        "overall": 84
+      },
+      {
+        "name": "Josko Gvardiol",
+        "position": "DEF",
+        "pace": 84,
+        "shooting": 55,
+        "passing": 76,
+        "dribbling": 78,
+        "defending": 83,
+        "physical": 82,
+        "overall": 85
+      },
+      {
+        "name": "Rodri",
+        "position": "MID",
+        "pace": 64,
+        "shooting": 78,
+        "passing": 86,
+        "dribbling": 82,
+        "defending": 86,
+        "physical": 85,
+        "overall": 89
+      },
+      {
+        "name": "Kevin De Bruyne",
+        "position": "MID",
+        "pace": 72,
+        "shooting": 86,
+        "passing": 93,
+        "dribbling": 87,
+        "defending": 64,
+        "physical": 78,
+        "overall": 90
+      },
+      {
+        "name": "Bernardo Silva",
+        "position": "MID",
+        "pace": 78,
+        "shooting": 78,
+        "passing": 87,
+        "dribbling": 90,
+        "defending": 66,
+        "physical": 66,
+        "overall": 87
+      },
+      {
+        "name": "Phil Foden",
+        "position": "FWD",
+        "pace": 82,
+        "shooting": 84,
+        "passing": 85,
+        "dribbling": 89,
+        "defending": 55,
+        "physical": 66,
+        "overall": 88
+      },
+      {
+        "name": "Erling Haaland",
+        "position": "FWD",
+        "pace": 89,
+        "shooting": 93,
+        "passing": 70,
+        "dribbling": 80,
+        "defending": 45,
+        "physical": 88,
+        "overall": 91
+      },
+      {
+        "name": "Jeremy Doku",
+        "position": "FWD",
+        "pace": 95,
+        "shooting": 72,
+        "passing": 74,
+        "dribbling": 89,
+        "defending": 38,
+        "physical": 68,
+        "overall": 83
+      }
+    ]
+  },
+  {
+    "external_ref": "ars",
+    "players": [
+      {
+        "name": "David Raya",
+        "position": "GK",
+        "pace": 58,
+        "shooting": 22,
+        "passing": 80,
+        "dribbling": 66,
+        "defending": 28,
+        "physical": 76,
+        "overall": 85
+      },
+      {
+        "name": "Ben White",
+        "position": "DEF",
+        "pace": 80,
+        "shooting": 48,
+        "passing": 76,
+        "dribbling": 76,
+        "defending": 83,
+        "physical": 78,
+        "overall": 83
+      },
+      {
+        "name": "William Saliba",
+        "position": "DEF",
+        "pace": 84,
+        "shooting": 42,
+        "passing": 78,
+        "dribbling": 74,
+        "defending": 87,
+        "physical": 86,
+        "overall": 86
+      },
+      {
+        "name": "Gabriel Magalhaes",
+        "position": "DEF",
+        "pace": 78,
+        "shooting": 50,
+        "passing": 72,
+        "dribbling": 68,
+        "defending": 86,
+        "physical": 87,
+        "overall": 85
+      },
+      {
+        "name": "Riccardo Calafiori",
+        "position": "DEF",
+        "pace": 80,
+        "shooting": 55,
+        "passing": 78,
+        "dribbling": 80,
+        "defending": 80,
+        "physical": 82,
+        "overall": 82
+      },
+      {
+        "name": "Declan Rice",
+        "position": "MID",
+        "pace": 76,
+        "shooting": 74,
+        "passing": 84,
+        "dribbling": 80,
+        "defending": 85,
+        "physical": 86,
+        "overall": 87
+      },
+      {
+        "name": "Martin Odegaard",
+        "position": "MID",
+        "pace": 74,
+        "shooting": 82,
+        "passing": 89,
+        "dribbling": 88,
+        "defending": 60,
+        "physical": 66,
+        "overall": 88
+      },
+      {
+        "name": "Mikel Merino",
+        "position": "MID",
+        "pace": 68,
+        "shooting": 76,
+        "passing": 82,
+        "dribbling": 78,
+        "defending": 78,
+        "physical": 84,
+        "overall": 83
+      },
+      {
+        "name": "Bukayo Saka",
+        "position": "FWD",
+        "pace": 86,
+        "shooting": 84,
+        "passing": 85,
+        "dribbling": 89,
+        "defending": 60,
+        "physical": 72,
+        "overall": 88
+      },
+      {
+        "name": "Kai Havertz",
+        "position": "FWD",
+        "pace": 79,
+        "shooting": 82,
+        "passing": 80,
+        "dribbling": 82,
+        "defending": 58,
+        "physical": 82,
+        "overall": 84
+      },
+      {
+        "name": "Gabriel Martinelli",
+        "position": "FWD",
+        "pace": 92,
+        "shooting": 80,
+        "passing": 78,
+        "dribbling": 86,
+        "defending": 50,
+        "physical": 70,
+        "overall": 84
+      }
+    ]
+  },
+  {
+    "external_ref": "liv",
+    "players": [
+      {
+        "name": "Alisson",
+        "position": "GK",
+        "pace": 60,
+        "shooting": 24,
+        "passing": 82,
+        "dribbling": 70,
+        "defending": 30,
+        "physical": 80,
+        "overall": 89
+      },
+      {
+        "name": "Trent Alexander-Arnold",
+        "position": "DEF",
+        "pace": 80,
+        "shooting": 72,
+        "passing": 90,
+        "dribbling": 82,
+        "defending": 78,
+        "physical": 72,
+        "overall": 86
+      },
+      {
+        "name": "Ibrahima Konate",
+        "position": "DEF",
+        "pace": 86,
+        "shooting": 40,
+        "passing": 72,
+        "dribbling": 72,
+        "defending": 84,
+        "physical": 88,
+        "overall": 84
+      },
+      {
+        "name": "Virgil van Dijk",
+        "position": "DEF",
+        "pace": 78,
+        "shooting": 60,
+        "passing": 80,
+        "dribbling": 74,
+        "defending": 89,
+        "physical": 90,
+        "overall": 89
+      },
+      {
+        "name": "Andrew Robertson",
+        "position": "DEF",
+        "pace": 82,
+        "shooting": 58,
+        "passing": 82,
+        "dribbling": 80,
+        "defending": 80,
+        "physical": 78,
+        "overall": 84
+      },
+      {
+        "name": "Alexis Mac Allister",
+        "position": "MID",
+        "pace": 72,
+        "shooting": 78,
+        "passing": 86,
+        "dribbling": 84,
+        "defending": 76,
+        "physical": 76,
+        "overall": 85
+      },
+      {
+        "name": "Ryan Gravenberch",
+        "position": "MID",
+        "pace": 80,
+        "shooting": 70,
+        "passing": 82,
+        "dribbling": 85,
+        "defending": 74,
+        "physical": 82,
+        "overall": 83
+      },
+      {
+        "name": "Dominik Szoboszlai",
+        "position": "MID",
+        "pace": 82,
+        "shooting": 80,
+        "passing": 84,
+        "dribbling": 84,
+        "defending": 66,
+        "physical": 80,
+        "overall": 84
+      },
+      {
+        "name": "Mohamed Salah",
+        "position": "FWD",
+        "pace": 89,
+        "shooting": 89,
+        "passing": 83,
+        "dribbling": 90,
+        "defending": 48,
+        "physical": 76,
+        "overall": 89
+      },
+      {
+        "name": "Darwin Nunez",
+        "position": "FWD",
+        "pace": 89,
+        "shooting": 82,
+        "passing": 72,
+        "dribbling": 78,
+        "defending": 42,
+        "physical": 86,
+        "overall": 82
+      },
+      {
+        "name": "Luis Diaz",
+        "position": "FWD",
+        "pace": 90,
+        "shooting": 80,
+        "passing": 79,
+        "dribbling": 88,
+        "defending": 52,
+        "physical": 74,
+        "overall": 84
+      }
+    ]
+  },
+  {
+    "external_ref": "che",
+    "players": [
+      {
+        "name": "Robert Sanchez",
+        "position": "GK",
+        "pace": 56,
+        "shooting": 20,
+        "passing": 74,
+        "dribbling": 60,
+        "defending": 26,
+        "physical": 80,
+        "overall": 80
+      },
+      {
+        "name": "Malo Gusto",
+        "position": "DEF",
+        "pace": 88,
+        "shooting": 48,
+        "passing": 76,
+        "dribbling": 80,
+        "defending": 78,
+        "physical": 72,
+        "overall": 80
+      },
+      {
+        "name": "Levi Colwill",
+        "position": "DEF",
+        "pace": 78,
+        "shooting": 42,
+        "passing": 76,
+        "dribbling": 74,
+        "defending": 81,
+        "physical": 80,
+        "overall": 81
+      },
+      {
+        "name": "Wesley Fofana",
+        "position": "DEF",
+        "pace": 86,
+        "shooting": 38,
+        "passing": 70,
+        "dribbling": 72,
+        "defending": 82,
+        "physical": 82,
+        "overall": 81
+      },
+      {
+        "name": "Marc Cucurella",
+        "position": "DEF",
+        "pace": 80,
+        "shooting": 52,
+        "passing": 78,
+        "dribbling": 80,
+        "defending": 79,
+        "physical": 76,
+        "overall": 81
+      },
+      {
+        "name": "Moises Caicedo",
+        "position": "MID",
+        "pace": 78,
+        "shooting": 70,
+        "passing": 82,
+        "dribbling": 82,
+        "defending": 84,
+        "physical": 84,
+        "overall": 84
+      },
+      {
+        "name": "Enzo Fernandez",
+        "position": "MID",
+        "pace": 72,
+        "shooting": 78,
+        "passing": 86,
+        "dribbling": 84,
+        "defending": 72,
+        "physical": 76,
+        "overall": 84
+      },
+      {
+        "name": "Cole Palmer",
+        "position": "MID",
+        "pace": 78,
+        "shooting": 86,
+        "passing": 86,
+        "dribbling": 88,
+        "defending": 56,
+        "physical": 68,
+        "overall": 86
+      },
+      {
+        "name": "Noni Madueke",
+        "position": "FWD",
+        "pace": 88,
+        "shooting": 78,
+        "passing": 76,
+        "dribbling": 85,
+        "defending": 42,
+        "physical": 70,
+        "overall": 80
+      },
+      {
+        "name": "Nicolas Jackson",
+        "position": "FWD",
+        "pace": 88,
+        "shooting": 80,
+        "passing": 72,
+        "dribbling": 80,
+        "defending": 44,
+        "physical": 80,
+        "overall": 81
+      },
+      {
+        "name": "Pedro Neto",
+        "position": "FWD",
+        "pace": 90,
+        "shooting": 76,
+        "passing": 78,
+        "dribbling": 86,
+        "defending": 48,
+        "physical": 68,
+        "overall": 81
+      }
+    ]
+  }
+]

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Fixture extends Model
 {
@@ -50,5 +51,10 @@ class Fixture extends Model
     public function scopeUnplayed(Builder $query): Builder
     {
         return $query->where('played', false);
+    }
+
+    public function events(): HasMany
+    {
+        return $this->hasMany(MatchEvent::class)->orderBy('second');
     }
 }

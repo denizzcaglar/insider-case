@@ -10,6 +10,7 @@ use App\Http\Presenters\SeasonStatePresenter;
 use App\Http\Presenters\StandingsPresenter;
 use App\Http\Requests\UpdateFixtureRequest;
 use App\Http\Resources\FixtureResource;
+use App\Http\Resources\MatchEventResource;
 use App\Models\Fixture;
 use App\Services\League\LeagueService;
 use Illuminate\Http\JsonResponse;
@@ -30,6 +31,7 @@ final class FixturesController extends Controller
         $fixtures = Fixture::query()
             ->where('season_id', $season->id)
             ->with(['homeTeam', 'awayTeam'])
+            ->withCount('events')
             ->orderBy('week')
             ->orderBy('id')
             ->get()
@@ -39,6 +41,27 @@ final class FixturesController extends Controller
         return new JsonResponse([
             'season' => SeasonStatePresenter::present($season, $this->league),
             'fixtures_by_week' => $fixtures,
+        ]);
+    }
+
+    public function events(Fixture $fixture): JsonResponse
+    {
+        $fixture->loadMissing(['homeTeam', 'awayTeam']);
+        $events = $fixture->events()->with('player:id,name')->get();
+
+        if ($events->isEmpty()) {
+            return new JsonResponse([
+                'message' => 'No events recorded for this fixture.',
+            ], 404);
+        }
+
+        return new JsonResponse([
+            'fixture_id' => (int) $fixture->id,
+            'score' => [
+                'home' => (int) $fixture->home_goals,
+                'away' => (int) $fixture->away_goals,
+            ],
+            'events' => MatchEventResource::collection($events)->resolve(),
         ]);
     }
 

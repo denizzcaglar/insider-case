@@ -244,6 +244,225 @@
         }
         .fixture .commentary.error { color: var(--danger); background: #fef2f2; border-color: #fecaca; }
         .fixture .commentary.loading { color: var(--muted); font-style: italic; }
+        .fixture .watch-link {
+            font-size: 12px;
+            color: var(--primary);
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .fixture .watch-link:hover { text-decoration: underline; }
+
+        /* Watch-match modal */
+        .watch-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            display: none;
+            align-items: center; justify-content: center;
+            z-index: 1000;
+        }
+        .watch-overlay.open { display: flex; }
+        .watch-modal {
+            background: var(--bg);
+            border-radius: var(--radius);
+            box-shadow: 0 24px 72px rgba(0, 0, 0, 0.35);
+            width: min(94vw, 820px);
+            max-height: 92vh;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+        }
+        .watch-header {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr auto;
+            gap: 16px;
+            align-items: center;
+            padding: 16px 22px;
+            border-bottom: 1px solid var(--border);
+            background: var(--card);
+        }
+        .watch-header .team {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 16px; font-weight: 600;
+        }
+        .watch-header .team.home { justify-content: flex-end; }
+        .watch-header .team.away { justify-content: flex-start; }
+        .watch-header .team img { width: 28px; height: 28px; object-fit: contain; }
+        .watch-header .score {
+            font-size: 28px; font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            padding: 0 18px;
+        }
+        .watch-header .close-btn {
+            background: transparent; border: none; cursor: pointer;
+            font-size: 22px; line-height: 1; color: var(--muted);
+            padding: 4px 8px;
+        }
+        .watch-header .close-btn:hover { color: var(--text); }
+
+        /* The pitch (top-down view). */
+        .watch-pitch-wrap {
+            padding: 18px 22px;
+            background: #0f1a0f;
+        }
+        .watch-pitch {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border: 2px solid rgba(255, 255, 255, 0.85);
+            border-radius: 4px;
+            overflow: hidden;
+            background:
+                repeating-linear-gradient(
+                    90deg,
+                    #1e4d1e 0px, #1e4d1e calc(100% / 14),
+                    #245a24 calc(100% / 14), #245a24 calc(100% / 7)
+                );
+            box-shadow:
+                inset 0 0 40px rgba(0, 0, 0, 0.45),
+                0 4px 18px rgba(0, 0, 0, 0.5);
+        }
+        .watch-pitch .line { position: absolute; background: rgba(255, 255, 255, 0.85); }
+        .watch-pitch .halfway { width: 2px; height: 100%; left: 50%; top: 0; transform: translateX(-50%); }
+        .watch-pitch .center-circle {
+            width: 19%; aspect-ratio: 1;
+            border: 2px solid rgba(255, 255, 255, 0.85);
+            background: transparent;
+            border-radius: 50%;
+            left: 50%; top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .watch-pitch .center-spot {
+            width: 6px; height: 6px;
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 50%;
+            left: 50%; top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .watch-pitch .box {
+            position: absolute;
+            width: 18%; height: 64%;
+            top: 18%;
+            border: 2px solid rgba(255, 255, 255, 0.85);
+            background: transparent;
+        }
+        .watch-pitch .box.left  { left: 0;  border-left: none; }
+        .watch-pitch .box.right { right: 0; border-right: none; }
+        .watch-pitch .six-yard {
+            position: absolute;
+            width: 7%; height: 30%;
+            top: 35%;
+            border: 2px solid rgba(255, 255, 255, 0.85);
+            background: transparent;
+        }
+        .watch-pitch .six-yard.left  { left: 0;  border-left: none; }
+        .watch-pitch .six-yard.right { right: 0; border-right: none; }
+        .watch-pitch .penalty-spot {
+            width: 5px; height: 5px;
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .watch-pitch .penalty-spot.left  { left: 12%; }
+        .watch-pitch .penalty-spot.right { right: 12%; transform: translate(50%, -50%); }
+        .watch-pitch .goal-net {
+            position: absolute;
+            width: 6px; height: 16%;
+            top: 42%;
+            background: rgba(255, 255, 255, 0.55);
+            border-radius: 1px;
+        }
+        .watch-pitch .goal-net.left  { left: -6px; }
+        .watch-pitch .goal-net.right { right: -6px; }
+        .watch-pitch .pitch-crest {
+            position: absolute;
+            width: 56px; height: 56px;
+            top: 50%; transform: translateY(-50%);
+            opacity: 0.22;
+            pointer-events: none;
+            object-fit: contain;
+        }
+        .watch-pitch .pitch-crest.home { left: 4%; }
+        .watch-pitch .pitch-crest.away { right: 4%; }
+
+        .watch-pitch .ball {
+            position: absolute;
+            width: 14px; height: 14px;
+            background: radial-gradient(circle at 35% 35%, #ffffff, #cccccc);
+            border-radius: 50%;
+            box-shadow:
+                0 0 10px rgba(255, 255, 255, 0.55),
+                0 2px 5px rgba(0, 0, 0, 0.6);
+            transform: translate(-50%, -50%);
+            transition: left 0.75s cubic-bezier(0.4, 0, 0.2, 1),
+                        top 0.75s cubic-bezier(0.4, 0, 0.2, 1);
+            left: 50%; top: 50%;
+            z-index: 5;
+        }
+        .watch-pitch .action-overlay {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.78);
+            color: white;
+            padding: 7px 16px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s;
+            white-space: nowrap;
+            z-index: 6;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .watch-pitch .action-overlay.visible { opacity: 1; }
+        .watch-pitch .action-overlay.goal    { background: #f59e0b; color: #1f1f1f; }
+        .watch-pitch .action-overlay.save    { background: #2563eb; color: #ffffff; }
+        .watch-pitch .action-overlay.period  { background: rgba(0,0,0,0.85); color: #ffffff; letter-spacing: 2px; }
+
+        .watch-feed {
+            flex: 1;
+            min-height: 120px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 12px 22px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 12.5px; line-height: 1.7;
+            background: var(--bg);
+            border-top: 1px solid var(--border);
+        }
+        .watch-feed .row {
+            display: grid;
+            grid-template-columns: 52px 48px 1fr;
+            gap: 10px; align-items: baseline;
+            padding: 1px 0;
+        }
+        .watch-feed .row .clock { color: var(--muted); font-variant-numeric: tabular-nums; }
+        .watch-feed .row .badge {
+            display: inline-block; text-align: center;
+            padding: 1px 6px; border-radius: 4px;
+            font-size: 10.5px; font-weight: 700;
+            background: #e5e7eb; color: #374151;
+        }
+        .watch-feed .row.goal .badge { background: #fef3c7; color: #92400e; }
+        .watch-feed .row.save .badge { background: #dbeafe; color: #1e40af; }
+        .watch-feed .row.kick .badge,
+        .watch-feed .row.ht .badge,
+        .watch-feed .row.ft .badge { background: #f3f4f6; color: #6b7280; }
+        .watch-footer {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 22px;
+            border-top: 1px solid var(--border);
+            background: var(--card);
+        }
+        .watch-footer .info { color: var(--muted); font-size: 12px; }
+        .watch-footer .controls { display: flex; gap: 8px; }
+        .watch-banner {
+            padding: 10px 22px;
+            background: #fef2f2; color: var(--danger);
+            font-size: 13px;
+            border-bottom: 1px solid #fecaca;
+        }
 
         .prediction-row {
             display: grid;
@@ -421,6 +640,45 @@
 
 <div id="flash"></div>
 
+<div id="watch-overlay" class="watch-overlay" aria-hidden="true">
+    <div class="watch-modal" role="dialog" aria-modal="true" aria-labelledby="watch-title">
+        <div class="watch-header">
+            <div class="team home" id="watch-home"><img id="watch-home-crest" alt=""><span id="watch-home-name">Home</span></div>
+            <div class="score" id="watch-score">0 – 0</div>
+            <div class="team away" id="watch-away"><span id="watch-away-name">Away</span><img id="watch-away-crest" alt=""></div>
+            <button class="close-btn" id="watch-close" aria-label="Close">&times;</button>
+        </div>
+        <div id="watch-error" class="watch-banner" style="display:none"></div>
+        <div class="watch-pitch-wrap">
+            <div class="watch-pitch" id="watch-pitch">
+                <img class="pitch-crest home" id="pitch-crest-home" alt="">
+                <img class="pitch-crest away" id="pitch-crest-away" alt="">
+                <div class="line halfway"></div>
+                <div class="line center-circle"></div>
+                <div class="line center-spot"></div>
+                <div class="line box left"></div>
+                <div class="line box right"></div>
+                <div class="line six-yard left"></div>
+                <div class="line six-yard right"></div>
+                <div class="line penalty-spot left"></div>
+                <div class="line penalty-spot right"></div>
+                <div class="goal-net left"></div>
+                <div class="goal-net right"></div>
+                <div class="ball" id="watch-ball"></div>
+                <div class="action-overlay" id="watch-action-overlay"></div>
+            </div>
+        </div>
+        <div class="watch-feed" id="watch-feed"></div>
+        <div class="watch-footer">
+            <span class="info" id="watch-status">Speed: 60x</span>
+            <div class="controls">
+                <button id="watch-skip">Skip to end</button>
+                <button id="watch-close-2">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 (() => {
     const $ = (id) => document.getElementById(id);
@@ -429,6 +687,8 @@
     let currentSeasonId = null;
     // Whether the active season is historical (read-only, fed-from-real-data).
     let currentSeasonIsHistorical = false;
+    // Gates Watch buttons to the current week.
+    let currentSeasonCurrentWeek = null;
     // Cached count of historical seasons for the predictions-panel badge text.
     let historicalSeasonCount = 0;
 
@@ -482,6 +742,7 @@
         currentSeasonIsHistorical = !!s.is_historical;
         $('season-name').textContent = `· ${s.name}`;
         $('current-week').textContent = s.current_week ?? '—';
+        currentSeasonCurrentWeek = s.current_week ?? null;
         $('played-count').textContent = s.fixtures_played;
         $('total-count').textContent = s.fixtures_total;
         $('complete-badge').hidden = !s.is_complete;
@@ -520,6 +781,12 @@
     const renderFixtures = (byWeek) => {
         const container = $('fixtures-body');
         const weeks = Object.keys(byWeek).map(Number).sort((a, b) => a - b);
+        fixturesCache.byId.clear();
+        weeks.forEach(w => byWeek[w].forEach(f => {
+            fixturesCache.byId.set(f.id, f);
+            cacheTeam(f.home_team);
+            cacheTeam(f.away_team);
+        }));
         if (weeks.length === 0) {
             container.innerHTML = '<div class="empty-state">No fixtures yet. Click <strong>Next Week</strong> to generate the schedule and play the first matches.</div>';
             return;
@@ -531,7 +798,6 @@
             </div>
         `).join('');
 
-        // Wire up edit links
         container.querySelectorAll('[data-edit-id]').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -539,14 +805,314 @@
             });
         });
 
-        // Wire up commentary links
         container.querySelectorAll('[data-commentary-id]').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 toggleCommentary(link.dataset.commentaryId, link);
             });
         });
+
+        container.querySelectorAll('[data-watch-id]').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const f = findFixture(parseInt(link.dataset.watchId, 10));
+                if (f) openWatchModal(f);
+            });
+        });
     };
+
+    let watchSource = null;
+    let watchFixture = null;
+    let watchTriggeredSimulation = false;
+    const WATCH_SPEED = 60;
+    const TYPE_BADGE = {
+        kickoff: 'KICK', halftime: 'HT', fulltime: 'FT',
+        shot: 'SHOT', save: 'SAVE', goal: 'GOAL',
+    };
+    const TEAM_LOOKUP = {};
+
+    const cacheTeam = (t) => { if (t && t.id != null) TEAM_LOOKUP[t.id] = t; };
+
+    const fixturesCache = { byId: new Map() };
+
+    const findFixture = (id) => fixturesCache.byId.get(id) || null;
+
+    const openWatchModal = (fixture) => {
+        watchFixture = fixture;
+        watchTriggeredSimulation = !fixture.played;
+        cacheTeam(fixture.home_team);
+        cacheTeam(fixture.away_team);
+
+        const homeCrest = `/img/teams/${fixture.home_team.short_name.toLowerCase()}.png`;
+        const awayCrest = `/img/teams/${fixture.away_team.short_name.toLowerCase()}.png`;
+
+        $('watch-home-name').textContent = fixture.home_team.name;
+        $('watch-away-name').textContent = fixture.away_team.name;
+        $('watch-home-crest').src = homeCrest;
+        $('watch-away-crest').src = awayCrest;
+        $('pitch-crest-home').src = homeCrest;
+        $('pitch-crest-away').src = awayCrest;
+
+        $('watch-score').textContent = '0 – 0';
+        $('watch-feed').innerHTML = '';
+        $('watch-error').style.display = 'none';
+        $('watch-status').textContent = `Speed: ${WATCH_SPEED}x`;
+        $('watch-skip').style.display = '';
+        $('watch-skip').disabled = false;
+        $('watch-overlay').classList.add('open');
+        $('watch-overlay').setAttribute('aria-hidden', 'false');
+
+        $('watch-ball').style.left = '50%';
+        $('watch-ball').style.top = '50%';
+        $('watch-action-overlay').className = 'action-overlay';
+
+        openSseStream(fixture.id);
+    };
+
+    const closeWatchModal = async () => {
+        if (watchSource) {
+            try { watchSource.close(); } catch (_) {}
+            watchSource = null;
+        }
+        clearTimeout(scheduleIdleDrift._t);
+        clearTimeout(showActionOverlay._t);
+        $('watch-overlay').classList.remove('open');
+        $('watch-overlay').setAttribute('aria-hidden', 'true');
+        const triggered = watchTriggeredSimulation;
+        watchFixture = null;
+        watchTriggeredSimulation = false;
+        if (triggered) {
+            await loadAll();
+        }
+    };
+
+    const openSseStream = (fixtureId) => {
+        if (watchSource) {
+            try { watchSource.close(); } catch (_) {}
+            watchSource = null;
+        }
+        try {
+            watchSource = new EventSource(`/api/fixtures/${fixtureId}/watch?speed=${WATCH_SPEED}`);
+        } catch (err) {
+            showWatchError('Could not start stream.');
+            return;
+        }
+
+        watchSource.addEventListener('match-event', (e) => {
+            try {
+                const ev = JSON.parse(e.data);
+                appendFeedRow(ev);
+            } catch (_) {}
+        });
+
+        watchSource.addEventListener('complete', (e) => {
+            try {
+                const data = JSON.parse(e.data);
+                $('watch-score').textContent = `${data.score_home} – ${data.score_away}`;
+            } catch (_) {}
+            $('watch-skip').style.display = 'none';
+            $('watch-status').textContent = 'Full time';
+            if (watchSource) {
+                try { watchSource.close(); } catch (_) {}
+                watchSource = null;
+            }
+        });
+
+        watchSource.onerror = () => {
+            if (!watchSource || watchSource.readyState !== EventSource.CLOSED) {
+                showWatchError('Connection lost.');
+            }
+        };
+    };
+
+    const appendFeedRow = (ev) => {
+        const feed = $('watch-feed');
+        const badge = TYPE_BADGE[ev.type] || ev.type.toUpperCase();
+        const cssClass = (ev.type === 'kickoff') ? 'kick' : ev.type;
+        const sentence = sentenceFor(ev);
+        const row = document.createElement('div');
+        row.className = `row ${cssClass}`;
+        row.innerHTML = `
+            <span class="clock">${ev.clock}</span>
+            <span class="badge">${badge}</span>
+            <span class="sentence">${sentence}</span>
+        `;
+        feed.appendChild(row);
+        feed.scrollTop = feed.scrollHeight;
+
+        moveBallForEvent(ev);
+
+        if (ev.type === 'goal') {
+            updateScoreFromGoal(ev);
+        }
+    };
+
+    const PITCH = {
+        CENTRE: { x: 50, y: 50 },
+        HOME_BOX_X: 88,
+        AWAY_BOX_X: 12,
+        HOME_RANGE_X: 64,
+        AWAY_RANGE_X: 36,
+        OFF_TARGET_HIGH_Y: [18, 36],
+        OFF_TARGET_LOW_Y:  [64, 82],
+        IDLE_X: [44, 56],
+        IDLE_Y: [40, 60],
+    };
+
+    const randIn = ([lo, hi]) => lo + Math.random() * (hi - lo);
+    const jitter = (amp) => (Math.random() - 0.5) * 2 * amp;
+
+    const positionForEvent = (ev) => {
+        if (!watchFixture) return PITCH.CENTRE;
+        if (ev.type === 'kickoff' || ev.type === 'halftime' || ev.type === 'fulltime') {
+            return PITCH.CENTRE;
+        }
+
+        const isHomeAttacking = ev.team_id === watchFixture.home_team.id;
+        const longRange = ev.detail && ev.detail.zone === 'MIDFIELD';
+
+        let baseX;
+        if (longRange) {
+            baseX = isHomeAttacking ? PITCH.HOME_RANGE_X : PITCH.AWAY_RANGE_X;
+        } else {
+            baseX = isHomeAttacking ? PITCH.HOME_BOX_X : PITCH.AWAY_BOX_X;
+        }
+
+        if (ev.type === 'goal' || ev.type === 'save') {
+            return { x: baseX + jitter(2), y: 50 + jitter(7) };
+        }
+
+        if (ev.type === 'shot') {
+            const goesHigh = Math.random() < 0.5;
+            const offY = goesHigh ? randIn(PITCH.OFF_TARGET_HIGH_Y) : randIn(PITCH.OFF_TARGET_LOW_Y);
+            const pushX = isHomeAttacking ? 1.5 : -1.5;
+            return { x: baseX + pushX + jitter(1.5), y: offY };
+        }
+
+        return PITCH.CENTRE;
+    };
+
+    const overlayDescriptorFor = (ev) => {
+        switch (ev.type) {
+            case 'kickoff':  return { text: 'KICK OFF',   cls: 'period' };
+            case 'halftime': return { text: 'HALF TIME',  cls: 'period' };
+            case 'fulltime': return { text: 'FULL TIME',  cls: 'period' };
+            case 'goal':     return { text: 'GOAL!',      cls: 'goal' };
+            case 'save':     return { text: 'SAVED',      cls: 'save' };
+            case 'shot':     return { text: 'OFF TARGET', cls: '' };
+            default:         return null;
+        }
+    };
+
+    const moveBallForEvent = (ev) => {
+        if (!watchFixture) return;
+        const ball = $('watch-ball');
+        const pos = positionForEvent(ev);
+
+        ball.style.left = pos.x + '%';
+        ball.style.top  = pos.y + '%';
+
+        const desc = overlayDescriptorFor(ev);
+        if (desc) showActionOverlay(desc.text, desc.cls, pos);
+
+        if (ev.type === 'goal' || ev.type === 'save' || ev.type === 'shot') {
+            scheduleIdleDrift();
+        }
+    };
+
+    const showActionOverlay = (text, cls, anchor) => {
+        const overlay = $('watch-action-overlay');
+        overlay.className = 'action-overlay';
+        overlay.textContent = text;
+
+        const overlayY = anchor.y >= 50
+            ? Math.max(8, anchor.y - 12)
+            : Math.min(88, anchor.y + 12);
+        const overlayX = Math.max(14, Math.min(86, anchor.x));
+        overlay.style.left = overlayX + '%';
+        overlay.style.top  = overlayY + '%';
+        if (cls) overlay.classList.add(cls);
+
+        requestAnimationFrame(() => overlay.classList.add('visible'));
+        clearTimeout(showActionOverlay._t);
+        showActionOverlay._t = setTimeout(() => overlay.classList.remove('visible'), 1500);
+    };
+
+    const scheduleIdleDrift = () => {
+        clearTimeout(scheduleIdleDrift._t);
+        scheduleIdleDrift._t = setTimeout(() => {
+            const ball = $('watch-ball');
+            if (!ball || !$('watch-overlay').classList.contains('open')) return;
+            ball.style.left = randIn(PITCH.IDLE_X) + '%';
+            ball.style.top  = randIn(PITCH.IDLE_Y) + '%';
+        }, 1400);
+    };
+
+    const sentenceFor = (ev) => {
+        const teamName = TEAM_LOOKUP[ev.team_id]?.short_name || '';
+        const player = ev.player_name ? escapeHtml(ev.player_name) : '';
+        switch (ev.type) {
+            case 'kickoff':  return 'Kick off.';
+            case 'halftime': return `Half time. ${ev.detail?.score_home ?? 0} – ${ev.detail?.score_away ?? 0}.`;
+            case 'fulltime': return `Full time. ${ev.detail?.score_home ?? 0} – ${ev.detail?.score_away ?? 0}.`;
+            case 'goal':     return `<strong>GOAL!</strong> ${player} (${teamName}).`;
+            case 'save':     return `${player} (${teamName}) shoots, saved.`;
+            case 'shot':     return `${player} (${teamName}) shoots, off target.`;
+            default:         return ev.type;
+        }
+    };
+
+    const updateScoreFromGoal = (ev) => {
+        if (!watchFixture) return;
+        const [h, a] = $('watch-score').textContent.split('–').map(s => parseInt(s.trim(), 10) || 0);
+        if (ev.team_id === watchFixture.home_team.id) {
+            $('watch-score').textContent = `${h + 1} – ${a}`;
+        } else if (ev.team_id === watchFixture.away_team.id) {
+            $('watch-score').textContent = `${h} – ${a + 1}`;
+        }
+    };
+
+    const showWatchError = (msg) => {
+        const b = $('watch-error');
+        b.textContent = msg;
+        b.style.display = '';
+    };
+
+    const skipToEnd = async () => {
+        if (!watchFixture) return;
+        $('watch-skip').disabled = true;
+        if (watchSource) {
+            try { watchSource.close(); } catch (_) {}
+            watchSource = null;
+        }
+        try {
+            const res = await fetch(`/api/fixtures/${watchFixture.id}/events`);
+            if (!res.ok) {
+                showWatchError('Could not load full event list.');
+                return;
+            }
+            const data = await res.json();
+            $('watch-feed').innerHTML = '';
+            data.events.forEach(appendFeedRow);
+            $('watch-score').textContent = `${data.score.home} – ${data.score.away}`;
+            $('watch-skip').style.display = 'none';
+            $('watch-status').textContent = 'Full time';
+        } catch (_) {
+            showWatchError('Could not load full event list.');
+        }
+    };
+
+    $('watch-close').addEventListener('click', closeWatchModal);
+    $('watch-close-2').addEventListener('click', closeWatchModal);
+    $('watch-overlay').addEventListener('click', (e) => {
+        if (e.target.id === 'watch-overlay') closeWatchModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && $('watch-overlay').classList.contains('open')) {
+            closeWatchModal();
+        }
+    });
+    $('watch-skip').addEventListener('click', skipToEnd);
 
     const toggleCommentary = async (fixtureId, link) => {
         const row = document.getElementById(`fixture-${fixtureId}`);
@@ -591,19 +1157,28 @@
 
     const fixtureMarkup = (f) => {
         const played = f.played;
+        const hasEvents = (f.events_count ?? 0) > 0;
         const scoreCell = played
             ? `<div class="score">${f.home_goals}-${f.away_goals}</div>`
             : `<div class="score placeholder">vs</div>`;
-        // Historical (read-only) fixtures get commentary but no edit link.
         const editLink = currentSeasonIsHistorical
             ? ''
             : `<a href="#" class="edit-link" data-edit-id="${f.id}">edit</a>`;
+        let watchLink = '';
+        if (!currentSeasonIsHistorical) {
+            if (!played && f.week === currentSeasonCurrentWeek) {
+                watchLink = `<a href="#" class="watch-link" data-watch-id="${f.id}">Watch</a>`;
+            } else if (played && hasEvents) {
+                watchLink = `<a href="#" class="watch-link" data-watch-id="${f.id}">Replay</a>`;
+            }
+        }
         const actions = played
             ? `<div class="actions">
                    ${editLink}
                    <a href="#" class="commentary-link" data-commentary-id="${f.id}">Commentary</a>
+                   ${watchLink}
                </div>`
-            : `<span></span>`;
+            : (watchLink ? `<div class="actions">${watchLink}</div>` : `<span></span>`);
         return `
             <div class="fixture${played ? '' : ' unplayed'}" id="fixture-${f.id}">
                 <div class="home">${escapeHtml(f.home_team.name)}</div>
@@ -719,6 +1294,16 @@
     const TEAM_COLORS = ['#2563eb', '#dc2626', '#16a34a', '#f59e0b'];
     let chartInstance = null;
 
+    const TEAM_CRESTS = {};
+    const loadCrest = (shortName) => {
+        const key = shortName.toLowerCase();
+        if (TEAM_CRESTS[shortName]) return TEAM_CRESTS[shortName];
+        const img = new Image(22, 22);
+        img.src = `/img/teams/${key}.png`;
+        TEAM_CRESTS[shortName] = img;
+        return img;
+    };
+
     const renderChart = (data) => {
         const card = $('chart-card');
         if (!data || data.weeks.length === 0 || typeof Chart === 'undefined') {
@@ -727,16 +1312,21 @@
         }
         card.hidden = false;
 
-        const datasets = data.series.map((s, i) => ({
-            label: s.team.short_name,
-            data: s.probabilities,
-            borderColor: TEAM_COLORS[i % TEAM_COLORS.length],
-            backgroundColor: TEAM_COLORS[i % TEAM_COLORS.length] + '22',
-            tension: 0.25,
-            spanGaps: true,
-            pointRadius: 3,
-            borderWidth: 2,
-        }));
+        const datasets = data.series.map((s, i) => {
+            const crest = loadCrest(s.team.short_name);
+            return {
+                label: s.team.short_name,
+                data: s.probabilities,
+                borderColor: TEAM_COLORS[i % TEAM_COLORS.length],
+                backgroundColor: TEAM_COLORS[i % TEAM_COLORS.length] + '22',
+                tension: 0.25,
+                spanGaps: true,
+                pointStyle: crest,
+                pointRadius: 11,
+                pointHoverRadius: 13,
+                borderWidth: 2,
+            };
+        });
 
         const config = {
             type: 'line',
@@ -745,16 +1335,25 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false },
+                layout: { padding: { top: 4, bottom: 4, left: 6, right: 14 } },
                 scales: {
                     y: {
-                        min: 0, max: 100,
-                        ticks: { callback: v => v + '%' },
+                        // Stretched past 0/100 so crests aren't bisected.
+                        min: -8, max: 108,
+                        ticks: {
+                            callback: v => v + '%',
+                            stepSize: 10,
+                            autoSkip: false,
+                        },
+                        afterBuildTicks: (axis) => {
+                            axis.ticks = axis.ticks.filter(t => t.value >= 0 && t.value <= 100);
+                        },
                         grid: { color: 'rgba(0,0,0,0.06)' },
                     },
                     x: { grid: { display: false } },
                 },
                 plugins: {
-                    legend: { position: 'bottom', labels: { boxWidth: 12, usePointStyle: true } },
+                    legend: { position: 'bottom', labels: { boxWidth: 22, boxHeight: 22, usePointStyle: true, padding: 14 } },
                     tooltip: {
                         callbacks: {
                             label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(1) ?? '—'}%`,
