@@ -12,6 +12,9 @@ final readonly class MatchEvent
     public const TYPE_SHOT = 'shot';
     public const TYPE_SAVE = 'save';
     public const TYPE_GOAL = 'goal';
+    public const TYPE_PASS = 'pass';
+    public const TYPE_DRIBBLE = 'dribble';
+    public const TYPE_TURNOVER = 'turnover';
 
     /**
      * @param  array<string, mixed>  $detail

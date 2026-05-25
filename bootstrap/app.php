@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\IdentifyTenant;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,10 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // PaaS hosts (Fly.io, Railway, Render, Heroku) put a reverse proxy in front
-        // of the app. Trust the proxy headers so URL generation, HTTPS detection,
-        // and the original client IP all work correctly.
         $middleware->trustProxies(at: '*');
+
+        $middleware->web(append: [IdentifyTenant::class]);
+        $middleware->api(append: [IdentifyTenant::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

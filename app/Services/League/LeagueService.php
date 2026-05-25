@@ -29,14 +29,7 @@ use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
 
-/**
- * Orchestrates state changes to a season's match schedule.
- *
- * Responsibilities: lazily generating fixtures, simulating weeks via the fast engine,
- * editing recorded results, and resetting the season. Standings are NOT cached here —
- * they are always recomputed by {@see \App\Services\Standings\StandingsCalculator}
- * from the persisted fixtures.
- */
+// Standings are never cached; StandingsCalculator rebuilds from played fixtures.
 final class LeagueService
 {
     public const SNAPSHOT_ITERATIONS = 10000;
@@ -50,9 +43,6 @@ final class LeagueService
     ) {
     }
 
-    /**
-     * Compute the current standings for a season from its played fixtures.
-     */
     public function standingsFor(Season $season): StandingsTable
     {
         $teams = Team::orderBy('id')
@@ -75,11 +65,7 @@ final class LeagueService
         return $this->standingsCalculator->calculate($teams, $playedFixtures);
     }
 
-    /**
-     * Simulate every match in the next unplayed week.
-     *
-     * @return Collection<int, Fixture> The freshly played fixtures.
-     */
+    /** @return Collection<int, Fixture> */
     public function nextWeek(Season $season): Collection
     {
         $this->ensureFixturesExist($season);
@@ -96,11 +82,7 @@ final class LeagueService
         return $played;
     }
 
-    /**
-     * Simulate every remaining week, returning the freshly played fixtures grouped by week.
-     *
-     * @return array<int, Collection<int, Fixture>> Keyed by week number.
-     */
+    /** @return array<int, Collection<int, Fixture>> */
     public function playAll(Season $season): array
     {
         $this->ensureFixturesExist($season);
@@ -108,6 +90,8 @@ final class LeagueService
         $byWeek = [];
         while (($week = $this->currentWeek($season)) !== null) {
             $byWeek[$week] = $this->playWeek($season, $week);
+            $this->predictionCache->bustForSeason((int) $season->id);
+            $this->snapshotPredictionsFor($season, $week);
         }
 
         return $byWeek;
@@ -146,9 +130,6 @@ final class LeagueService
         });
     }
 
-    /**
-     * Amend a fixture's result. Marks the fixture as played even if it wasn't already.
-     */
     public function editResult(Fixture $fixture, int $homeGoals, int $awayGoals): Fixture
     {
         if ($homeGoals < 0 || $awayGoals < 0) {
@@ -164,12 +145,10 @@ final class LeagueService
 
         $this->predictionCache->bustForSeason((int) $fixture->season_id);
 
-        // The cached commentary describes a score that no longer applies. Drop it;
-        // the next /commentary call will regenerate against the new score.
         MatchCommentary::where('fixture_id', $fixture->id)->delete();
+        MatchEvent::where('fixture_id', $fixture->id)->delete();
 
-        // Edits change state at every later week too, so re-snapshot every fully-played
-        // week. Each snapshot reuses the cached predictor result after the first compute.
+        // Re-snapshot every fully-played week: an edit changes downstream weeks too.
         foreach ($this->fullyPlayedWeeks($fixture->season) as $week) {
             $this->snapshotPredictionsFor($fixture->season, $week);
         }
@@ -177,11 +156,6 @@ final class LeagueService
         return $fixture->fresh();
     }
 
-    /**
-     * Reset the season: delete all fixtures, regenerate the schedule, and roll a new RNG seed.
-     *
-     * Pass an explicit $seed for reproducible re-runs (used by tests and the data-refresh flow).
-     */
     public function reset(Season $season, ?string $seed = null): void
     {
         DB::transaction(function () use ($season, $seed): void {
@@ -200,9 +174,6 @@ final class LeagueService
         $this->predictionCache->bustForSeason((int) $season->id);
     }
 
-    /**
-     * The first week that still has at least one unplayed fixture, or null if the season is over.
-     */
     public function currentWeek(Season $season): ?int
     {
         $min = Fixture::query()
@@ -222,10 +193,7 @@ final class LeagueService
             new SeededRng(($season->rng_seed ?? 'unseeded') . ':' . $week),
         );
 
-        // One source of truth for "how strong is each team right now": the same
-        // EffectiveStrengthBuilder the predictor uses. This blends the historical
-        // fit with the EWMA form computed from already-played weeks 1..N-1, so the
-        // simulator and the form tracker agree on what "expected" means.
+        // Single source of truth for team strength (predictor uses the same builder).
         $strengths = $this->strengthBuilder->build($season)['strengths'];
 
         $fixtures = Fixture::query()
@@ -255,10 +223,6 @@ final class LeagueService
         return $fixtures->fresh()->load(['homeTeam', 'awayTeam']);
     }
 
-    /**
-     * Generate fixtures and assign a seed on first use, so the standard flow
-     * (migrate:fresh --seed → next-week) works without an explicit reset.
-     */
     private function ensureFixturesExist(Season $season): void
     {
         $exists = Fixture::where('season_id', $season->id)->exists();
@@ -279,14 +243,8 @@ final class LeagueService
         }
     }
 
-    /**
-     * Record the current title probabilities as a snapshot for the given week.
-     * Uses a deterministic, season-scoped seed so the chart line stays stable
-     * across re-renders.
-     *
-     * Failures are logged but never raised — the user-facing operation (playing
-     * a week, editing a result) must not fail because the chart couldn't update.
-     */
+    // Season-scoped seed keeps the chart line stable across re-renders.
+    // Failures are logged so playWeek/edit never breaks if the predictor errors.
     private function snapshotPredictionsFor(Season $season, int $weekNumber): void
     {
         try {
@@ -319,9 +277,7 @@ final class LeagueService
         return $remaining === 0;
     }
 
-    /**
-     * @return list<int> week numbers where every fixture in that week has played=true
-     */
+    /** @return list<int> */
     private function fullyPlayedWeeks(Season $season): array
     {
         return Fixture::query()

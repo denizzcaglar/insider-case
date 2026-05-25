@@ -14,7 +14,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('fixture_id')->constrained()->cascadeOnDelete();
             $table->unsignedSmallInteger('second');
-            $table->enum('type', ['kickoff', 'halftime', 'fulltime', 'shot', 'save', 'goal']);
+            $table->string('type', 32);
             $table->foreignId('team_id')->nullable()->constrained('teams')->nullOnDelete();
             $table->foreignId('player_id')->nullable()->constrained('players')->nullOnDelete();
             $table->json('detail')->nullable();

@@ -11,13 +11,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-/**
- * Generates a 2-sentence narrative commentary for a played fixture.
- *
- * Backed by Google Gemini via the public Generative Language REST API.
- * The model identifier is read from config (default: gemini-2.5-pro);
- * to swap providers entirely, replace this class.
- */
+// Gemini-backed narrative commentary; swap providers by replacing this class.
 final class CommentaryGenerator
 {
     private const ENDPOINT_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -33,7 +27,7 @@ final class CommentaryGenerator
             throw new CommentaryGenerationException('Gemini API key is not configured.');
         }
 
-        $model = (string) config('commentary.model', 'gemini-2.5-pro');
+        $model = (string) config('commentary.model', 'gemini-2.5-flash');
         $url = sprintf('%s/%s:generateContent?key=%s', self::ENDPOINT_BASE, $model, $apiKey);
 
         $prompt = $this->buildPrompt($fixture, $before, $after);
@@ -46,10 +40,7 @@ final class CommentaryGenerator
                     'generationConfig' => [
                         'temperature' => 0.85,
                         'maxOutputTokens' => 256,
-                        // Gemini 2.5 family enables "thinking" by default, which silently
-                        // consumes maxOutputTokens before producing visible text. For a
-                        // 2-sentence summary we don't need thinking; turn it off so the
-                        // full budget goes to user-visible output.
+                        // Disable thinking: it eats the maxOutputTokens budget silently.
                         'thinkingConfig' => ['thinkingBudget' => 0],
                     ],
                 ]);
@@ -113,7 +104,6 @@ final class CommentaryGenerator
             }
         }
 
-        // Defensive fallback: a team that has never appeared in any played fixture.
         return sprintf('%s: 0 points (position unknown)', $teamName);
     }
 }

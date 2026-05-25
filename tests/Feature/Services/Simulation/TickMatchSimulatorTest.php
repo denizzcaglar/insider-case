@@ -137,6 +137,9 @@ final class TickMatchSimulatorTest extends TestCase
             EventVO::TYPE_SHOT,
             EventVO::TYPE_SAVE,
             EventVO::TYPE_GOAL,
+            EventVO::TYPE_PASS,
+            EventVO::TYPE_DRIBBLE,
+            EventVO::TYPE_TURNOVER,
         ];
 
         foreach ($out->events as $event) {

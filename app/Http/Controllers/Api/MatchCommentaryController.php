@@ -11,14 +11,6 @@ use App\Services\Commentary\MatchCommentaryService;
 use Illuminate\Http\JsonResponse;
 use InvalidArgumentException;
 
-/**
- * Returns a short LLM-generated narrative for a single played fixture.
- *
- * The first call to this endpoint for a given fixture triggers a Gemini
- * round-trip (~1-2s). Subsequent calls return the cached row instantly.
- * Editing the fixture invalidates the cache; resetting the league cascades
- * the deletion via the foreign key.
- */
 final class MatchCommentaryController extends Controller
 {
     public function __construct(private readonly MatchCommentaryService $service)
@@ -32,9 +24,11 @@ final class MatchCommentaryController extends Controller
         } catch (InvalidArgumentException $e) {
             return new JsonResponse(['message' => $e->getMessage()], 422);
         } catch (CommentaryGenerationException $e) {
-            return new JsonResponse([
-                'message' => 'Commentary service unavailable; please try again.',
-            ], 503);
+            $message = str_contains($e->getMessage(), 'API key')
+                ? 'API key not configured. Please enter your Gemini API key to enable match commentary.'
+                : 'Commentary service unavailable; please try again.';
+
+            return new JsonResponse(['message' => $message], 503);
         }
 
         return new JsonResponse([

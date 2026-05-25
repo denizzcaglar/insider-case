@@ -52,10 +52,11 @@ final class MatchStreamController extends Controller
         }
 
         $events = $fixture->events()->with('player:id,name')->orderBy('second')->get();
+        $latest = $fixture->fresh();
 
         return $this->sseResponse(
             events: $events,
-            score: ['home' => (int) $fixture->fresh()->home_goals, 'away' => (int) $fixture->fresh()->away_goals],
+            score: ['home' => (int) $latest->home_goals, 'away' => (int) $latest->away_goals],
             speed: $request->speed(),
         );
     }
@@ -111,7 +112,6 @@ final class MatchStreamController extends Controller
         $isTesting = app()->runningUnitTests();
 
         return new StreamedResponse(function () use ($events, $score, $speed, $isTesting): void {
-            // ob buffer drop skipped in tests (warning => failure).
             if (! $isTesting) {
                 while (ob_get_level() > 0) {
                     @ob_end_clean();

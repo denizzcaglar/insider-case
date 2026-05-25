@@ -51,6 +51,15 @@ final class TickMatchSimulator implements WatchableMatchSimulator
     private const TURNOVER_EXTRA_MIN = 0;
     private const TURNOVER_EXTRA_MAX = 3;
 
+    private const EMIT_PASS_OWN = 0.05;
+    private const EMIT_PASS_MID = 0.15;
+    private const EMIT_PASS_ATT = 0.25;
+    private const EMIT_DRIB_MID = 0.30;
+    private const EMIT_DRIB_ATT = 0.60;
+    private const EMIT_TURNOVER_OWN = 0.20;
+    private const EMIT_TURNOVER_MID = 0.20;
+    private const EMIT_TURNOVER_ATT = 0.50;
+
     public function __construct(
         private readonly Rng $rng,
         private readonly PlayerDecisionEngine $decisions,
@@ -166,7 +175,7 @@ final class TickMatchSimulator implements WatchableMatchSimulator
     ): array {
         return match ($action) {
             PlayerDecisionEngine::ACTION_DRIBBLE => $this->resolveDribble(
-                $onBall, $defenderRoster, $zone, $attackingTeamId, $defenderTeamId,
+                $onBall, $defenderRoster, $zone, $attackingTeamId, $defenderTeamId, $currentSecond,
             ),
             PlayerDecisionEngine::ACTION_SHOT => $this->resolveShot(
                 $onBall, $defenderRoster, $attackerStrength, $defenderStrength,
@@ -174,7 +183,7 @@ final class TickMatchSimulator implements WatchableMatchSimulator
             ),
             default => $this->resolvePass(
                 $onBall, $attackerRoster, $defenderRoster, $zone,
-                $attackingTeamId, $defenderTeamId,
+                $attackingTeamId, $defenderTeamId, $currentSecond,
             ),
         };
     }
@@ -192,6 +201,7 @@ final class TickMatchSimulator implements WatchableMatchSimulator
         int $zone,
         int $attackingTeamId,
         int $defenderTeamId,
+        int $currentSecond,
     ): array {
         $defender = $this->decisions->pickDefender($defenderRoster, $zone);
 
@@ -206,9 +216,20 @@ final class TickMatchSimulator implements WatchableMatchSimulator
             $newZone = $advance ? min(self::ZONE_ATTACKING_THIRD, $zone + 1) : $zone;
             $receiver = $this->decisions->pickReceiver($attackerRoster, $newZone, $onBall['id']);
 
+            $emitRate = $this->emitPassRate($newZone);
+            $event = $this->rng->nextFloat() < $emitRate
+                ? new EventVO(
+                    second: $currentSecond,
+                    type: EventVO::TYPE_PASS,
+                    teamId: $attackingTeamId,
+                    playerId: $receiver['id'],
+                    detail: ['zone' => self::zoneLabel($newZone)],
+                )
+                : null;
+
             return [
                 'secondsElapsed' => $duration,
-                'event' => null,
+                'event' => $event,
                 'newPossession' => $attackingTeamId,
                 'newOnBall' => $receiver,
                 'newZone' => $newZone,
@@ -216,13 +237,24 @@ final class TickMatchSimulator implements WatchableMatchSimulator
         }
 
         $duration += $this->rng->nextInt(self::TURNOVER_EXTRA_MIN, self::TURNOVER_EXTRA_MAX);
+        $defenderZone = $this->mirrorZone($zone);
+
+        $event = $this->rng->nextFloat() < $this->emitTurnoverRate($zone)
+            ? new EventVO(
+                second: $currentSecond,
+                type: EventVO::TYPE_TURNOVER,
+                teamId: $defenderTeamId,
+                playerId: $defender['id'],
+                detail: ['zone' => self::zoneLabel($defenderZone)],
+            )
+            : null;
 
         return [
             'secondsElapsed' => $duration,
-            'event' => null,
+            'event' => $event,
             'newPossession' => $defenderTeamId,
             'newOnBall' => $defender,
-            'newZone' => $this->mirrorZone($zone),
+            'newZone' => $defenderZone,
         ];
     }
 
@@ -237,6 +269,7 @@ final class TickMatchSimulator implements WatchableMatchSimulator
         int $zone,
         int $attackingTeamId,
         int $defenderTeamId,
+        int $currentSecond,
     ): array {
         $defender = $this->decisions->pickDefender($defenderRoster, $zone);
 
@@ -247,24 +280,73 @@ final class TickMatchSimulator implements WatchableMatchSimulator
         $duration = $this->rng->nextInt(self::DRIBBLE_SECONDS_MIN, self::DRIBBLE_SECONDS_MAX);
 
         if ($this->rng->nextFloat() < $successProb) {
+            $newZone = min(self::ZONE_ATTACKING_THIRD, $zone + 1);
+
+            $event = $this->rng->nextFloat() < $this->emitDribbleRate($newZone)
+                ? new EventVO(
+                    second: $currentSecond,
+                    type: EventVO::TYPE_DRIBBLE,
+                    teamId: $attackingTeamId,
+                    playerId: $onBall['id'],
+                    detail: ['zone' => self::zoneLabel($newZone)],
+                )
+                : null;
+
             return [
                 'secondsElapsed' => $duration,
-                'event' => null,
+                'event' => $event,
                 'newPossession' => $attackingTeamId,
                 'newOnBall' => $onBall,
-                'newZone' => min(self::ZONE_ATTACKING_THIRD, $zone + 1),
+                'newZone' => $newZone,
             ];
         }
 
         $duration += $this->rng->nextInt(self::TURNOVER_EXTRA_MIN, self::TURNOVER_EXTRA_MAX);
+        $defenderZone = $this->mirrorZone($zone);
+
+        $event = $this->rng->nextFloat() < $this->emitTurnoverRate($zone)
+            ? new EventVO(
+                second: $currentSecond,
+                type: EventVO::TYPE_TURNOVER,
+                teamId: $defenderTeamId,
+                playerId: $defender['id'],
+                detail: ['zone' => self::zoneLabel($defenderZone)],
+            )
+            : null;
 
         return [
             'secondsElapsed' => $duration,
-            'event' => null,
+            'event' => $event,
             'newPossession' => $defenderTeamId,
             'newOnBall' => $defender,
-            'newZone' => $this->mirrorZone($zone),
+            'newZone' => $defenderZone,
         ];
+    }
+
+    private function emitPassRate(int $zone): float
+    {
+        return match ($zone) {
+            self::ZONE_OWN_THIRD => self::EMIT_PASS_OWN,
+            self::ZONE_ATTACKING_THIRD => self::EMIT_PASS_ATT,
+            default => self::EMIT_PASS_MID,
+        };
+    }
+
+    private function emitDribbleRate(int $zone): float
+    {
+        return match ($zone) {
+            self::ZONE_ATTACKING_THIRD => self::EMIT_DRIB_ATT,
+            default => self::EMIT_DRIB_MID,
+        };
+    }
+
+    private function emitTurnoverRate(int $zone): float
+    {
+        return match ($zone) {
+            self::ZONE_OWN_THIRD => self::EMIT_TURNOVER_OWN,
+            self::ZONE_ATTACKING_THIRD => self::EMIT_TURNOVER_ATT,
+            default => self::EMIT_TURNOVER_MID,
+        };
     }
 
     /**
@@ -380,14 +462,19 @@ final class TickMatchSimulator implements WatchableMatchSimulator
      */
     private function loadRoster(int $teamId): array
     {
+        $rank = ['GK' => 0, 'DEF' => 1, 'MID' => 2, 'FWD' => 3];
+
         return Player::query()
             ->where('team_id', $teamId)
-            ->orderByRaw("FIELD(position, 'GK', 'DEF', 'MID', 'FWD')")
             ->orderBy('id')
             ->get([
                 'id', 'name', 'position', 'pace', 'shooting',
                 'passing', 'dribbling', 'defending', 'physical', 'overall',
             ])
+            ->sortBy(
+                fn (Player $p) => sprintf('%d-%010d', $rank[$p->position] ?? 9, $p->id),
+            )
+            ->values()
             ->map(fn (Player $p) => [
                 'id' => (int) $p->id,
                 'name' => $p->name,

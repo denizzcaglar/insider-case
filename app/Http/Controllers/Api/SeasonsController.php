@@ -18,9 +18,10 @@ final class SeasonsController extends Controller
 {
     public function index(): JsonResponse
     {
-        $current = Season::current();
+        $current = Season::forCurrentTenant();
 
         $seasons = Season::query()
+            ->visibleToCurrentTenant()
             ->orderBy('id')
             ->withCount([
                 'fixtures',

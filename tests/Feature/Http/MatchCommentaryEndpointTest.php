@@ -74,7 +74,7 @@ final class MatchCommentaryEndpointTest extends TestCase
 
         $this->getJson("/api/fixtures/{$fixture->id}/commentary")
             ->assertStatus(503)
-            ->assertJsonPath('message', 'Commentary service unavailable; please try again.');
+            ->assertJsonPath('message', 'API key not configured. Please enter your Gemini API key to enable match commentary.');
 
         Http::assertNothingSent();
         self::assertSame(0, MatchCommentary::where('fixture_id', $fixture->id)->count());

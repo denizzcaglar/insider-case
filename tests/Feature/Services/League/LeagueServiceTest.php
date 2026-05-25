@@ -103,6 +103,22 @@ final class LeagueServiceTest extends TestCase
         self::assertNull($this->service()->currentWeek($season));
     }
 
+    public function test_play_all_records_a_prediction_snapshot_for_every_week(): void
+    {
+        $season = $this->season();
+
+        $this->service()->playAll($season);
+
+        $weeks = \App\Models\PredictionSnapshot::where('season_id', $season->id)
+            ->distinct()
+            ->orderBy('week_number')
+            ->pluck('week_number')
+            ->map(static fn ($w) => (int) $w)
+            ->all();
+
+        self::assertSame([1, 2, 3, 4, 5, 6], $weeks);
+    }
+
     public function test_seeded_season_is_fully_deterministic_end_to_end(): void
     {
         $season = $this->season();

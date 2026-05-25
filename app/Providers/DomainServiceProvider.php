@@ -17,22 +17,18 @@ use App\Services\Simulation\DefaultMatchSimulatorFactory;
 use App\Services\Simulation\StatisticalMatchSimulator;
 use App\Services\Standings\StandingsCalculator;
 use App\Support\SeededRng;
+use App\Support\TenantContext;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use Illuminate\Support\ServiceProvider;
 
-/**
- * Binds domain contracts to their concrete implementations.
- *
- * The fast {@see StatisticalMatchSimulator} is the default {@see MatchSimulator}.
- * The predictor receives a seedable factory that produces the same fast engine,
- * wrapped in a {@see CachedChampionshipPredictor} for per-(season, state, seed)
- * result caching. Team strengths come from {@see EffectiveStrengthBuilder},
- * which composes the historical fit and the current-season form tracker.
- */
+// Composition root for the domain contracts.
 final class DomainServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Default to "no tenant" so CLI/test contexts work without middleware.
+        $this->app->singleton(TenantContext::class, fn () => new TenantContext());
+
         $this->app->bind(MatchSimulator::class, fn () => new StatisticalMatchSimulator(
             new SeededRng(),
         ));

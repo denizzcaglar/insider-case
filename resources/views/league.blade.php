@@ -449,6 +449,9 @@
         .watch-feed .row.kick .badge,
         .watch-feed .row.ht .badge,
         .watch-feed .row.ft .badge { background: #f3f4f6; color: #6b7280; }
+        .watch-feed .row.pass .badge { background: #ecfdf5; color: #047857; }
+        .watch-feed .row.dribble .badge { background: #eef2ff; color: #4338ca; }
+        .watch-feed .row.turnover .badge { background: #fef2f2; color: #b91c1c; }
         .watch-footer {
             display: flex; justify-content: space-between; align-items: center;
             padding: 12px 22px;
@@ -457,6 +460,28 @@
         }
         .watch-footer .info { color: var(--muted); font-size: 12px; }
         .watch-footer .controls { display: flex; gap: 8px; }
+        .watch-footer .speed-pills {
+            display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+        }
+        .watch-footer .speed-pill {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 11px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--bg);
+            color: var(--muted);
+            cursor: pointer;
+            line-height: 1;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        .watch-footer .speed-pill:hover { color: var(--text); border-color: #cbd5e1; }
+        .watch-footer .speed-pill.is-active {
+            background: var(--primary);
+            color: #ffffff;
+            border-color: var(--primary);
+        }
+        .watch-footer .speed-pill.is-active:hover { color: #ffffff; }
         .watch-banner {
             padding: 10px 22px;
             background: #fef2f2; color: var(--danger);
@@ -670,7 +695,13 @@
         </div>
         <div class="watch-feed" id="watch-feed"></div>
         <div class="watch-footer">
-            <span class="info" id="watch-status">Speed: 60x</span>
+            <div class="speed-pills" id="watch-speed" role="group" aria-label="Playback speed">
+                <button type="button" class="speed-pill" data-speed="10">10x</button>
+                <button type="button" class="speed-pill is-active" data-speed="20">20x</button>
+                <button type="button" class="speed-pill" data-speed="30">30x</button>
+                <button type="button" class="speed-pill" data-speed="60">60x</button>
+                <span id="watch-status" class="info"></span>
+            </div>
             <div class="controls">
                 <button id="watch-skip">Skip to end</button>
                 <button id="watch-close-2">Close</button>
@@ -683,13 +714,9 @@
 (() => {
     const $ = (id) => document.getElementById(id);
 
-    // Active season id; null until the seasons list has loaded once.
     let currentSeasonId = null;
-    // Whether the active season is historical (read-only, fed-from-real-data).
     let currentSeasonIsHistorical = false;
-    // Gates Watch buttons to the current week.
     let currentSeasonCurrentWeek = null;
-    // Cached count of historical seasons for the predictions-panel badge text.
     let historicalSeasonCount = 0;
 
     const flash = (msg, isError = false) => {
@@ -700,7 +727,6 @@
         flash._t = setTimeout(() => el.className = '', 2500);
     };
 
-    // Append ?season_id=X to GETs and {season_id: X} to POST/PATCH bodies.
     const withSeason = (path) => {
         if (currentSeasonId === null) return path;
         const sep = path.includes('?') ? '&' : '?';
@@ -748,7 +774,6 @@
         $('complete-badge').hidden = !s.is_complete;
         $('historical-note').hidden = !currentSeasonIsHistorical;
 
-        // Mutating buttons hidden entirely for historical seasons.
         $('btn-next').hidden = currentSeasonIsHistorical;
         $('btn-play-all').hidden = currentSeasonIsHistorical;
         $('btn-reset').hidden = currentSeasonIsHistorical;
@@ -824,10 +849,16 @@
     let watchSource = null;
     let watchFixture = null;
     let watchTriggeredSimulation = false;
-    const WATCH_SPEED = 60;
+    let watchSpeed = 20;
+    let watchLastSecond = -1;
+    let watchPaceTimer = null;
+    let watchFinalScore = null;
+    // De-dupes rows when speed change swaps SSE -> client-side pacing.
+    const watchSeenKeys = new Set();
     const TYPE_BADGE = {
         kickoff: 'KICK', halftime: 'HT', fulltime: 'FT',
         shot: 'SHOT', save: 'SAVE', goal: 'GOAL',
+        pass: 'PASS', dribble: 'DRIB', turnover: 'LOSS',
     };
     const TEAM_LOOKUP = {};
 
@@ -856,9 +887,14 @@
         $('watch-score').textContent = '0 – 0';
         $('watch-feed').innerHTML = '';
         $('watch-error').style.display = 'none';
-        $('watch-status').textContent = `Speed: ${WATCH_SPEED}x`;
+        setActiveSpeedPill(watchSpeed);
+        $('watch-status').textContent = '';
         $('watch-skip').style.display = '';
         $('watch-skip').disabled = false;
+        watchSeenKeys.clear();
+        watchLastSecond = -1;
+        watchFinalScore = null;
+        cancelClientPace();
         $('watch-overlay').classList.add('open');
         $('watch-overlay').setAttribute('aria-hidden', 'false');
 
@@ -874,6 +910,7 @@
             try { watchSource.close(); } catch (_) {}
             watchSource = null;
         }
+        cancelClientPace();
         clearTimeout(scheduleIdleDrift._t);
         clearTimeout(showActionOverlay._t);
         $('watch-overlay').classList.remove('open');
@@ -892,7 +929,7 @@
             watchSource = null;
         }
         try {
-            watchSource = new EventSource(`/api/fixtures/${fixtureId}/watch?speed=${WATCH_SPEED}`);
+            watchSource = new EventSource(`/api/fixtures/${fixtureId}/watch?speed=${watchSpeed}`);
         } catch (err) {
             showWatchError('Could not start stream.');
             return;
@@ -908,6 +945,7 @@
         watchSource.addEventListener('complete', (e) => {
             try {
                 const data = JSON.parse(e.data);
+                watchFinalScore = { home: data.score_home, away: data.score_away };
                 $('watch-score').textContent = `${data.score_home} – ${data.score_away}`;
             } catch (_) {}
             $('watch-skip').style.display = 'none';
@@ -925,7 +963,14 @@
         };
     };
 
+    const eventKey = (ev) => `${ev.second}|${ev.type}|${ev.team_id ?? ''}|${ev.player_id ?? ''}`;
+
     const appendFeedRow = (ev) => {
+        const key = eventKey(ev);
+        if (watchSeenKeys.has(key)) return;
+        watchSeenKeys.add(key);
+        if (ev.second > watchLastSecond) watchLastSecond = ev.second;
+
         const feed = $('watch-feed');
         const badge = TYPE_BADGE[ev.type] || ev.type.toUpperCase();
         const cssClass = (ev.type === 'kickoff') ? 'kick' : ev.type;
@@ -969,14 +1014,24 @@
         }
 
         const isHomeAttacking = ev.team_id === watchFixture.home_team.id;
-        const longRange = ev.detail && ev.detail.zone === 'MIDFIELD';
+        const zone = (ev.detail && ev.detail.zone) || 'MIDFIELD';
 
-        let baseX;
-        if (longRange) {
-            baseX = isHomeAttacking ? PITCH.HOME_RANGE_X : PITCH.AWAY_RANGE_X;
-        } else {
-            baseX = isHomeAttacking ? PITCH.HOME_BOX_X : PITCH.AWAY_BOX_X;
+        if (ev.type === 'pass' || ev.type === 'dribble' || ev.type === 'turnover') {
+            let baseX;
+            if (zone === 'OWN_THIRD') {
+                baseX = isHomeAttacking ? 18 : 82;
+            } else if (zone === 'ATTACKING_THIRD') {
+                baseX = isHomeAttacking ? 76 : 24;
+            } else {
+                baseX = 50;
+            }
+            return { x: baseX + jitter(6), y: 50 + jitter(22) };
         }
+
+        const longRange = zone === 'MIDFIELD';
+        const baseX = longRange
+            ? (isHomeAttacking ? PITCH.HOME_RANGE_X : PITCH.AWAY_RANGE_X)
+            : (isHomeAttacking ? PITCH.HOME_BOX_X : PITCH.AWAY_BOX_X);
 
         if (ev.type === 'goal' || ev.type === 'save') {
             return { x: baseX + jitter(2), y: 50 + jitter(7) };
@@ -1058,6 +1113,9 @@
             case 'goal':     return `<strong>GOAL!</strong> ${player} (${teamName}).`;
             case 'save':     return `${player} (${teamName}) shoots, saved.`;
             case 'shot':     return `${player} (${teamName}) shoots, off target.`;
+            case 'pass':     return `${player} (${teamName}) finds a teammate.`;
+            case 'dribble':  return `${player} (${teamName}) drives forward.`;
+            case 'turnover': return `${player} (${teamName}) wins the ball.`;
             default:         return ev.type;
         }
     };
@@ -1076,6 +1134,66 @@
         const b = $('watch-error');
         b.textContent = msg;
         b.style.display = '';
+    };
+
+    const cancelClientPace = () => {
+        if (watchPaceTimer !== null) {
+            clearTimeout(watchPaceTimer);
+            watchPaceTimer = null;
+        }
+    };
+
+    // Speed-change handover: SSE -> setTimeout chain at the new pace.
+    const switchToClientPace = async () => {
+        if (!watchFixture) return;
+        try {
+            const res = await fetch(`/api/fixtures/${watchFixture.id}/events`);
+            if (!res.ok) return;
+            const data = await res.json();
+            watchFinalScore = data.score;
+            const remaining = data.events.filter((e) => !watchSeenKeys.has(eventKey(e)));
+            runClientPace(remaining);
+        } catch (_) {}
+    };
+
+    const runClientPace = (remaining) => {
+        cancelClientPace();
+        if (remaining.length === 0) {
+            if (watchFinalScore) {
+                $('watch-score').textContent = `${watchFinalScore.home} – ${watchFinalScore.away}`;
+            }
+            $('watch-skip').style.display = 'none';
+            $('watch-status').textContent = 'Full time';
+            return;
+        }
+        const next = remaining[0];
+        const reference = Math.max(watchLastSecond, 0);
+        const delayMs = Math.max(0, (next.second - reference) / watchSpeed * 1000);
+        watchPaceTimer = setTimeout(() => {
+            appendFeedRow(next);
+            runClientPace(remaining.slice(1));
+        }, delayMs);
+    };
+
+    const setActiveSpeedPill = (speed) => {
+        document.querySelectorAll('#watch-speed .speed-pill').forEach((btn) => {
+            btn.classList.toggle('is-active', parseInt(btn.dataset.speed, 10) === speed);
+        });
+    };
+
+    const onSpeedPillClick = async (e) => {
+        const btn = e.target.closest('.speed-pill');
+        if (!btn) return;
+        const speed = parseInt(btn.dataset.speed, 10) || 20;
+        if (speed === watchSpeed) return;
+        watchSpeed = speed;
+        setActiveSpeedPill(speed);
+        if (!watchFixture) return;
+        if (watchSource) {
+            try { watchSource.close(); } catch (_) {}
+            watchSource = null;
+        }
+        await switchToClientPace();
     };
 
     const skipToEnd = async () => {
@@ -1113,6 +1231,7 @@
         }
     });
     $('watch-skip').addEventListener('click', skipToEnd);
+    $('watch-speed').addEventListener('click', onSpeedPillClick);
 
     const toggleCommentary = async (fixtureId, link) => {
         const row = document.getElementById(`fixture-${fixtureId}`);
@@ -1131,7 +1250,6 @@
         link.textContent = 'Hide commentary';
 
         try {
-            // Don't add ?season_id= here — fixtures are uniquely keyed by id.
             const res = await fetch(`/api/fixtures/${fixtureId}/commentary`, {
                 headers: { 'Accept': 'application/json' },
             });
@@ -1290,7 +1408,6 @@
 
     const fmt = (n, dp = 1) => (n === undefined || n === null) ? '—' : Number(n).toFixed(dp);
 
-    // Distinct, color-blind-friendly palette for up to 4 teams.
     const TEAM_COLORS = ['#2563eb', '#dc2626', '#16a34a', '#f59e0b'];
     let chartInstance = null;
 
@@ -1383,8 +1500,6 @@
             renderFixtures(fixtures.fixtures_by_week);
             renderChart(snapshots);
 
-            // Historical seasons are the data feeding the model, not a thing to predict;
-            // hide the predictions card and the line chart when one is selected.
             if (standings.season.is_historical) {
                 $('predictions-card').hidden = true;
                 $('chart-card').hidden = true;
